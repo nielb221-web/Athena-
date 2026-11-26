@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Athena — Academic Workspace</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,600;6..72,700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F8F9FA;
+    --surface: #FFFFFF;
+    --surface-2: #F1F5F9;
+    --border: #E2E8F0;
+    --ink: #0F172A;
+    --muted: #475569;
+    --accent: #1E3A8A;
+    --accent-soft: rgba(30, 58, 138, 0.09);
+    --amber: #D97706;
+    --amber-soft: rgba(217, 119, 6, 0.12);
+    --emerald: #059669;
+    --emerald-soft: rgba(5, 150, 105, 0.12);
+    --crimson: #DC2626;
+    --crimson-soft: rgba(220, 38, 38, 0.12);
+    --shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
+    --radius: 14px;
+    --sidebar-w: 248px;
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  [data-theme="dark"] {
+    --bg: #0B0F19;
+    --surface: #111827;
+    --surface-2: #1E293B;
+    --border: #1F2937;
+    --ink: #F8FAFC;
+    --muted: #94A3B8;
+    --accent: #60A5FA;
+    --accent-soft: rgba(96, 165, 250, 0.14);
+    --amber: #FBBF24;
+    --amber-soft: rgba(251, 191, 36, 0.14);
+    --emerald: #34D399;
+    --emerald-soft: rgba(52, 211, 153, 0.14);
+    --crimson: #F87171;
+    --crimson-soft: rgba(248, 113, 113, 0.14);
+    --shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    line-height: 1.5;
+    min-height: 100vh;
+    transition: background 0.3s var(--ease), color 0.3s var(--ease);
+    overflow-x: hidden;
+  }
+  .serif { font-family: 'Newsreader', Georgia, serif; }
+  .hidden { display: none !important; }
+
+  /* Privacy Blur */
+  body.privacy-mode .sensitive {
+    filter: blur(7px);
+    user-select: none;
+    pointer-events: none;
+    transition: filter 0.25s var(--ease);
+  }
+  .sensitive { transition: filter 0.25s var(--ease); }
+
+  /* Auth Screen */
+  .auth-wrap {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: radial-gradient(circle at top right, var(--accent-soft), transparent 45%), var(--bg);
+  }
+  .auth-card {
+    width: 100%;
+    max-width: 440px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: var(--shadow);
+    animation: fadeSlideUp 0.45s var(--ease);
+  }
+  .brand-mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .brand-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--accent);
+    color: #fff;
+    display: grid; place-items: center;
+    font-weight: 700; font-size: 18px;
+  }
+  [data-theme="dark"] .brand-icon { color: #0B0F19; }
+  .auth-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: var(--surface-2);
+    padding: 4px;
+    border-radius: 10px;
+    margin: 20px 0;
+  }
+  .auth-tab {
+    border: none; background: transparent;
+    padding: 9px; border-radius: 8px;
+    font-weight: 600; font-size: 13.5px;
+    color: var(--muted); cursor: pointer;
+    transition: all 0.2s var(--ease);
+  }
+  .auth-tab.active {
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  }
+
+  /* Inputs & Buttons */
+  .field { margin-bottom: 14px; }
+  .field label {
+    display: block; font-size: 12.5px; font-weight: 600;
+    color: var(--muted); margin-bottom: 5px;
+  }
+  input, select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    font-family: inherit;
+    font-size: 14px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    font-weight: 600; font-size: 13.5px;
+    cursor: pointer;
+    transition: transform 0.15s var(--ease), background 0.2s, opacity 0.2s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary { background: var(--accent); color: #fff; }
+  [data-theme="dark"] .btn-primary { color: #0B0F19; }
+  .btn-primary:hover { opacity: 0.92; }
+  .btn-ghost { background: var(--surface-2); color: var(--ink); border-color: var(--border); }
+  .btn-ghost:hover { border-color: var(--accent); }
+  .btn-sm { padding: 6px 11px; font-size: 12.5px; border-radius: 8px; }
+  .btn-danger { background: var(--crimson-soft); color: var(--crimson); }
+
+  /* App Shell */
+  .app-shell { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: var(--sidebar-w);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; bottom: 0; left: 0;
+    z-index: 40;
+    transition: transform 0.32s var(--ease), width 0.32s var(--ease);
+  }
+  .sidebar.collapsed {
+    transform: translateX(-100%);
+  }
+  .sidebar-header {
+    height: 60px;
+    padding: 0 18px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-list { padding: 14px 12px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 11px;
+    padding: 11px 13px;
+    border-radius: 10px;
+    border: none; background: transparent;
+    color: var(--muted);
+    font-weight: 500; font-size: 14px;
+    cursor: pointer; text-align: left;
+    transition: all 0.2s var(--ease);
+  }
+  .nav-item:hover { background: var(--surface-2); color: var(--ink); }
+  .nav-item.active {
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .sidebar-footer {
+    padding: 14px;
+    border-top: 1px solid var(--border);
+    font-size: 12.5px;
+  }
+
+  .main-wrap {
+    flex: 1;
+    margin-left: var(--sidebar-w);
+    transition: margin-left 0.32s var(--ease);
+    display: flex; flex-direction: column;
+    min-width: 0;
+  }
+  .main-wrap.expanded { margin-left: 0; }
+
+  /* Topbar */
+  .topbar {
+    height: 60px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    position: sticky; top: 0; z-index: 30;
+  }
+  .top-left, .top-right { display: flex; align-items: center; gap: 10px; }
+  .icon-btn {
+    width: 36px; height: 36px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--ink);
+    display: grid; place-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .sync-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 11px; border-radius: 999px;
+    font-size: 12px; font-weight: 600;
+    background: var(--emerald-soft); color: var(--emerald);
+  }
+  .sync-pill.syncing { background: var(--amber-soft); color: var(--amber); }
+  .sync-pill.error { background: var(--crimson-soft); color: var(--crimson); }
+
+  /* Content & Cards */
+  .content { padding: 24px; max-width: 1280px; width: 100%; margin: 0 auto; }
+  .view-section { animation: fadeSlideUp 0.32s var(--ease); }
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .grid-2 { display: grid; grid-template-columns: 1.55fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: var(--shadow);
+  }
+  .card-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px; gap: 10px;
+  }
+  .card-title { font-size: 16px; font-weight: 700; }
+
+  /* Badges */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 9px; border-radius: 999px;
+    font-size: 11.5px; font-weight: 600;
+  }
+  .b-accent { background: var(--accent-soft); color: var(--accent); }
+  .b-emerald { background: var(--emerald-soft); color: var(--emerald); }
+  .b-amber { background: var(--amber-soft); color: var(--amber); }
+  .b-crimson { background: var(--crimson-soft); color: var(--crimson); }
+  .b-neutral { background: var(--surface-2); color: var(--muted); }
+
+  /* Timetable & Lecture Slots */
+  .slot-card {
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    background: var(--surface);
+    transition: transform 0.2s var(--ease), opacity 0.2s;
+  }
+  .slot-card.dimmed { opacity: 0.45; text-decoration: line-through; }
+  .status-pills { display: flex; gap: 5px; flex-wrap: wrap; }
+  .st-btn {
+    padding: 5px 9px; border-radius: 7px; font-size: 11.5px; font-weight: 600;
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--muted);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .st-btn.active-delivered { background: var(--emerald); color: #fff; border-color: var(--emerald); }
+  .st-btn.active-proxy { background: var(--amber); color: #fff; border-color: var(--amber); }
+  .st-btn.active-canceled { background: var(--crimson); color: #fff; border-color: var(--crimson); }
+
+  /* Kanban */
+  .kanban-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .kanban-col {
+    background: var(--surface-2);
+    border-radius: 12px;
+    padding: 12px;
+    min-height: 360px;
+    border: 1px dashed transparent;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .kanban-col.drag-over { border-color: var(--accent); background: var(--accent-soft); }
+  .k-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    cursor: grab;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+    transition: transform 0.15s;
+  }
+  .k-card:active { cursor: grabbing; transform: scale(0.98); }
+
+  /* Progress Bar */
+  .prog-track {
+    height: 8px; background: var(--surface-2);
+    border-radius: 999px; overflow: hidden; margin-top: 6px;
+  }
+  .prog-fill {
+    height: 100%; background: var(--accent);
+    border-radius: 999px;
+    transition: width 0.5s var(--ease);
+  }
+
+  /* Slide-Over Drawer */
+  .drawer-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(4px);
+    z-index: 60;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s var(--ease);
+  }
+  .drawer-backdrop.open { opacity: 1; pointer-events: auto; }
+  .drawer {
+    position: fixed; top: 0; right: 0; bottom: 0;
+    width: 100%; max-width: 460px;
+    background: var(--surface);
+    border-left: 1px solid var(--border);
+    z-index: 70;
+    padding: 24px;
+    overflow-y: auto;
+    transform: translateX(100%);
+    transition: transform 0.32s var(--ease);
+  }
+  .drawer.open { transform: translateX(0); }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 20px; right: 20px;
+    background: var(--ink); color: var(--surface);
+    padding: 11px 18px; border-radius: 10px;
+    font-size: 13px; font-weight: 500;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    z-index: 100;
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.3s var(--ease);
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  /* Responsive */
+  @media (max-width: 960px) {
+    .grid-2, .kanban-grid { grid-template-columns: 1fr; }
+    .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    .sidebar { transform: translateX(-100%); }
+    .sidebar.mobile-open { transform: translateX(0); box-shadow: 20px 0 50px rgba(0,0,0,0.25); }
+    .main-wrap { margin-left: 0 !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- AUTH VIEW -->
+<div id="authView" class="auth-wrap">
+  <div class="auth-card">
+    <div class="brand-mark">
+      <div class="brand-icon serif">A</div>
+      <div>
+        <h1 class="serif" style="font-size:24px; line-height:1.1;">Athena</h1>
+        <p style="font-size:12px; color:var(--muted);">Academic &amp; Faculty Workspace</p>
+      </div>
+    </div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabLogin" onclick="switchAuthMode('login')">Sign In</button>
+      <button class="auth-tab" id="tabSignup" onclick="switchAuthMode('signup')">Create Account</button>
+    </div>
+
+    <form id="authForm" onsubmit="handleAuthSubmit(event)">
+      <div id="signupFields" class="hidden">
+        <div class="field">
+          <label>Full Name &amp; Title</label>
+          <input type="text" id="authName" placeholder="e.g., Dr. Nilesh Khairnar">
+        </div>
+        <div class="field">
+          <label>College / Institution</label>
+          <input type="text" id="authInst" placeholder="e.g., GACSC Limbayat, Surat">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Academic Email</label>
+        <input type="email" id="authEmail" required placeholder="professor@college.edu">
+      </div>
+
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="authPass" required placeholder="Minimum 6 characters">
+      </div>
+
+      <div id="inviteField" class="field hidden">
+        <label>Invite Code</label>
+        <input type="text" id="authInvite" placeholder="Enter faculty invite code">
+      </div>
+
+      <p id="authError" style="color:var(--crimson); font-size:12.5px; margin-bottom:12px;" class="hidden"></p>
+
+      <button type="submit" class="btn btn-primary" style="width:100%;" id="authSubmitBtn">Sign In to Athena</button>
+    </form>
+  </div>
+</div>
+
+<!-- MAIN WORKSPACE -->
+<div id="appShell" class="app-shell hidden">
+  <!-- Collapsible Left Sidebar -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <div class="brand-mark" style="margin:0;">
+        <div class="brand-icon serif" style="width:30px;height:30px;font-size:16px;">A</div>
+        <span class="serif" style="font-size:20px;font-weight:700;">Athena</span>
+      </div>
+      <button class="icon-btn" onclick="toggleSidebar()" title="Hide Sidebar">&#10005;</button>
+    </div>
+
+    <nav class="nav-list">
+      <button class="nav-item active" data-view="today" onclick="navigate('today')">&#9728;&#65039; Today</button>
+      <button class="nav-item" data-view="teaching" onclick="navigate('teaching')">&#128218; Teaching &amp; Timetable</button>
+      <button class="nav-item" data-view="research" onclick="navigate('research')">&#128300; Research Pipeline</button>
+      <button class="nav-item" data-view="opportunities" onclick="navigate('opportunities')">&#127758; Opportunities &amp; Calls</button>
+      <button class="nav-item" data-view="analytics" onclick="navigate('analytics')">&#128202; Analytics &amp; Reports</button>
+      <button class="nav-item" data-view="settings" onclick="navigate('settings')">&#9881;&#65039; Settings &amp; Vault</button>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div style="font-weight:600;" id="sideUserName">Professor</div>
+      <div style="color:var(--muted); font-size:11.5px; margin-bottom:10px;" id="sideUserInst">Institution</div>
+      <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="logout()">Sign Out</button>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <div id="mainWrap" class="main-wrap">
+    <header class="topbar">
+      <div class="top-left">
+        <button class="icon-btn" onclick="toggleSidebar()" title="Toggle Navigation">&#9776;</button>
+        <select id="profileSwitcher" onchange="switchActiveProfile(this.value)" style="width:auto; max-width:230px; padding:6px 10px; font-size:13px; font-weight:600;"></select>
+      </div>
+      <div class="top-right">
+        <span id="syncPill" class="sync-pill" onclick="forceSync()" style="cursor:pointer;" title="Click to sync now">&#10003; Synced</span>
+        <button class="icon-btn" onclick="togglePrivacy()" title="Privacy Screen Blur">&#128065;</button>
+        <button class="icon-btn" onclick="toggleTheme()" title="Switch Light/Dark Mode">&#9681;</button>
+      </div>
+    </header>
+
+    <main class="content">
+      <!-- 1. TODAY VIEW -->
+      <section id="view-today" class="view-section">
+        <div class="card-header" style="flex-wrap:wrap;">
+          <div>
+            <h2 class="serif" style="font-size:26px;" id="todayHeading">Today's Schedule</h2>
+            <p style="font-size:13px; color:var(--muted);" id="todaySubheading"></p>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" onclick="shiftDay(-1)">&larr; Yesterday</button>
+            <button class="btn btn-ghost btn-sm" onclick="shiftDay(0)">Today</button>
+            <button class="btn btn-ghost btn-sm" onclick="shiftDay(1)">Tomorrow &rarr;</button>
+            <button class="btn btn-sm" id="holidayBtn" onclick="toggleHoliday()">&#127958;&#65039; Holiday Mode: Off</button>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <div class="card" style="margin-bottom:18px;">
+              <div class="card-header">
+                <span class="card-title">Lectures &amp; Sessions</span>
+                <button class="btn btn-primary btn-sm" onclick="openDrawer('slot')">+ Add Weekly Slot</button>
+              </div>
+              <div id="todaySlotsList"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Urgent Deadlines (Next 72 Hours)</span>
+              </div>
+              <div id="urgentDeadlinesList"></div>
+            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:18px;">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Top 3 Daily Priorities</span>
+              </div>
+              <div style="display:flex; gap:8px; margin-bottom:12px;">
+                <input type="text" id="newPriorityInput" placeholder="Add priority task..." onkeydown="if(event.key==='Enter') addPriority()">
+                <button class="btn btn-primary btn-sm" onclick="addPriority()">Add</button>
+              </div>
+              <div id="priorityList"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Quick Scratchpad</span>
+                <span style="font-size:11.5px; color:var(--muted);">Auto-saves</span>
+              </div>
+              <textarea id="scratchpadArea" rows="6" class="sensitive" placeholder="Jot down lecture reminders, student notes, or quick links..." oninput="updateScratchpad(this.value)"></textarea>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. TEACHING & TIMETABLE VIEW -->
+      <section id="view-teaching" class="view-section hidden">
+        <div class="card-header" style="flex-wrap:wrap;">
+          <div>
+            <h2 class="serif" style="font-size:26px;">Teaching &amp; Timetable</h2>
+            <p style="font-size:13px; color:var(--muted);">Manage college terms, custom subjects, paper types, and recurring weekly classes.</p>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" onclick="openDrawer('profile')">+ College / Term</button>
+            <button class="btn btn-ghost btn-sm" onclick="openDrawer('types')">&#9881;&#65039; Custom Types</button>
+            <button class="btn btn-primary btn-sm" onclick="openDrawer('subject')">+ Add Subject</button>
+            <button class="btn btn-primary btn-sm" onclick="openDrawer('slot')">+ Add Class Slot</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:20px;">
+          <div class="card-header">
+            <span class="card-title">Subjects &amp; Syllabus Progress</span>
+          </div>
+          <div id="subjectsGrid" class="grid-3"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Master Weekly Timetable</span>
+            <select id="dayFilterSelect" onchange="renderTeaching()" style="width:auto; padding:6px 10px; font-size:13px;">
+              <option value="ALL">All Days</option>
+              <option value="Monday">Monday</option>
+              <option value="Tuesday">Tuesday</option>
+              <option value="Wednesday">Wednesday</option>
+              <option value="Thursday">Thursday</option>
+              <option value="Friday">Friday</option>
+              <option value="Saturday">Saturday</option>
+            </select>
+          </div>
+          <div id="masterTimetableList"></div>
+        </div>
+      </section>
+
+      <!-- 3. RESEARCH PIPELINE VIEW -->
+      <section id="view-research" class="view-section hidden">
+        <div class="card-header">
+          <div>
+            <h2 class="serif" style="font-size:26px;">Research &amp; Publications</h2>
+            <p style="font-size:13px; color:var(--muted);">Drag cards across stages or tap to update manuscript progress.</p>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openDrawer('research')">+ New Manuscript / Seminar</button>
+        </div>
+
+        <div class="kanban-grid" id="kanbanBoard"></div>
+      </section>
+
+      <!-- 4. OPPORTUNITIES & FELLOWSHIPS VIEW -->
+      <section id="view-opportunities" class="view-section hidden">
+        <div class="card-header" style="flex-wrap:wrap;">
+          <div>
+            <h2 class="serif" style="font-size:26px;">Opportunities &amp; Fellowships</h2>
+            <p style="font-size:13px; color:var(--muted);">Track visiting faculty openings, walk-in interviews, grants, and international fellowships.</p>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openDrawer('opportunity')">+ Add Opportunity</button>
+        </div>
+
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
+          <button class="btn btn-sm btn-primary" data-opp-filter="ALL" onclick="setOppFilter('ALL')">All Active</button>
+          <button class="btn btn-sm btn-ghost" data-opp-filter="Walk-in" onclick="setOppFilter('Walk-in')">Walk-in Only</button>
+          <button class="btn btn-sm btn-ghost" data-opp-filter="Free" onclick="setOppFilter('Free')">Free Application</button>
+          <button class="btn btn-sm btn-ghost" data-opp-filter="International" onclick="setOppFilter('International')">International</button>
+        </div>
+
+        <div id="opportunitiesList" class="grid-3"></div>
+      </section>
+
+      <!-- 5. ANALYTICS VIEW -->
+      <section id="view-analytics" class="view-section hidden">
+        <div class="card-header">
+          <div>
+            <h2 class="serif" style="font-size:26px;">Academic Analytics &amp; Appraisal</h2>
+            <p style="font-size:13px; color:var(--muted);">Live workload metrics, syllabus completion, and career conversion rates.</p>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="copyAppraisalReport()">&#128203; Copy Semester Summary</button>
+        </div>
+
+        <div class="grid-4" style="margin-bottom:20px;" id="analyticsKpis"></div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Delivered Lectures by Session Type</span></div>
+            <div id="chartSessionTypes"></div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-title">Opportunity &amp; Fee Breakdown</span></div>
+            <div id="chartOpportunities"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. SETTINGS & VAULT VIEW -->
+      <section id="view-settings" class="view-section hidden">
+        <div class="card-header">
+          <div>
+            <h2 class="serif" style="font-size:26px;">Settings, Profile &amp; Resource Vault</h2>
+            <p style="font-size:13px; color:var(--muted);">Manage your account, quick links, and JSON backups.</p>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Account &amp; Appearance</span></div>
+            <div class="field">
+              <label>Display Name</label>
+              <input type="text" id="setProfileName">
+            </div>
+            <div class="field">
+              <label>Primary Institution</label>
+              <input type="text" id="setProfileInst">
+            </div>
+            <div class="field">
+              <label>New Password (leave blank to keep current)</label>
+              <input type="password" id="setNewPass" placeholder="Min 6 characters">
+            </div>
+            <div class="field">
+              <label>Accent Color</label>
+              <input type="color" id="setAccentColor" style="height:42px; padding:4px;" onchange="updateAccent(this.value)">
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button class="btn btn-primary btn-sm" onclick="saveProfileSettings()">Save Account Changes</button>
+              <button class="btn btn-ghost btn-sm" onclick="exportJsonBackup()">&#11015;&#65039; Export JSON Backup</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Academic Resource Vault</span>
+              <button class="btn btn-primary btn-sm" onclick="openDrawer('vault')">+ Add Link</button>
+            </div>
+            <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">Store quick links to psychological scales, Google Forms, Drive folders, or portals.</p>
+            <div id="vaultLinksList"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<!-- SLIDE-OVER DRAWER -->
+<div id="drawerBackdrop" class="drawer-backdrop" onclick="closeDrawer()"></div>
+<div id="drawerPanel" class="drawer">
+  <div class="card-header">
+    <h3 class="serif" style="font-size:22px;" id="drawerTitle">Add Item</h3>
+    <button class="icon-btn" onclick="closeDrawer()">&#10005;</button>
+  </div>
+  <div id="drawerBody"></div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwY1r7EplF12pA4xklqulYs2rEujT1Cyn8hANK51TcuyiKi5sHP3tE7tHBimmaNweKAWg/exec";
+
+let authMode = 'login';
+let session = JSON.parse(localStorage.getItem('athena_session') || 'null');
+let ws = null;
+let selectedDateOffset = 0;
+let oppFilter = 'ALL';
+let saveTimer = null;
+
+// Init
+window.addEventListener('DOMContentLoaded', () => {
+  if (session && session.user && session.token) {
+    bootWorkspace();
+  }
+});
+
+function switchAuthMode(mode) {
+  authMode = mode;
+  document.getElementById('tabLogin').classList.toggle('active', mode === 'login');
+  document.getElementById('tabSignup').classList.toggle('active', mode === 'signup');
+  document.getElementById('signupFields').classList.toggle('hidden', mode === 'login');
+  document.getElementById('inviteField').classList.toggle('hidden', mode === 'login');
+  document.getElementById('authSubmitBtn').textContent = mode === 'login' ? 'Sign In to Athena' : 'Create Faculty Account';
+  document.getElementById('authError').classList.add('hidden');
+}
+
+async function handleAuthSubmit(e) {
+  e.preventDefault();
+  const btn = document.getElementById('authSubmitBtn');
+  const errEl = document.getElementById('authError');
+  errEl.classList.add('hidden');
+  btn.disabled = true;
+  btn.textContent = authMode === 'login' ? 'Signing in...' : 'Creating account...';
+
+  const payload = {
+    action: authMode,
+    email: document.getElementById('authEmail').value.trim(),
+    password: document.getElementById('authPass').value,
+    name: document.getElementById('authName').value.trim(),
+    institution: document.getElementById('authInst').value.trim(),
+    inviteCode: document.getElementById('authInvite').value.trim()
+  };
+
+  try {
+    const res = await apiCall(payload);
+    if (!res.success) {
+      errEl.textContent = res.error || 'Authentication failed.';
+      errEl.classList.remove('hidden');
+    } else {
+      session = { user: res.user, token: res.token };
+      localStorage.setItem('athena_session', JSON.stringify(session));
+      ws = res.workspace;
+      localStorage.setItem('athena_cache_' + res.user.userId, JSON.stringify(ws));
+      enterApp();
+    }
+  } catch (err) {
+    errEl.textContent = 'Network error connecting to Google Drive backend.';
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = authMode === 'login' ? 'Sign In to Athena' : 'Create Faculty Account';
+  }
+}
+
+async function bootWorkspace() {
+  const cached = localStorage.getItem('athena_cache_' + session.user.userId);
+  if (cached) {
+    ws = JSON.parse(cached);
+    enterApp();
+  }
+  setSyncState('syncing', 'Syncing...');
+  try {
+    const res = await apiCall({ action: 'load', userId: session.user.userId, token: session.token });
+    if (res.authError) {
+      logout();
+      return;
+    }
+    if (res.success && res.workspace) {
+      ws = res.workspace;
+      session.user = res.user;
+      localStorage.setItem('athena_session', JSON.stringify(session));
+      localStorage.setItem('athena_cache_' + session.user.userId, JSON.stringify(ws));
+      if (document.getElementById('appShell').classList.contains('hidden')) enterApp();
+      else renderAll();
+      setSyncState('ok', 'Synced');
+    }
+  } catch (e) {
+    setSyncState('error', 'Offline');
+  }
+}
+
+function enterApp() {
+  document.getElementById('authView').classList.add('hidden');
+  document.getElementById('appShell').classList.remove('hidden');
+  document.getElementById('sideUserName').textContent = session.user.name;
+  document.getElementById('sideUserInst').textContent = session.user.institution || 'Academic Workspace';
+  applySettings();
+  renderAll();
+}
+
+function logout() {
+  localStorage.removeItem('athena_session');
+  session = null;
+  ws = null;
+  document.getElementById('appShell').classList.add('hidden');
+  document.getElementById('authView').classList.remove('hidden');
+}
+
+async function apiCall(payload) {
+  const response = await fetch(GAS_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  });
+  return await response.json();
+}
+
+function queueSave() {
+  if (!ws || !session) return;
+  localStorage.setItem('athena_cache_' + session.user.userId, JSON.stringify(ws));
+  setSyncState('syncing', 'Saving...');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(forceSync, 1400);
+}
+
+async function forceSync() {
+  if (!ws || !session) return;
+  setSyncState('syncing', 'Syncing...');
+  try {
+    const res = await apiCall({
+      action: 'save',
+      userId: session.user.userId,
+      token: session.token,
+      workspace: ws
+    });
+    if (res.success) setSyncState('ok', 'Synced');
+    else setSyncState('error', 'Sync Failed');
+  } catch (e) {
+    setSyncState('error', 'Offline');
+  }
+}
+
+function setSyncState(state, label) {
+  const pill = document.getElementById('syncPill');
+  pill.className = 'sync-pill' + (state === 'syncing' ? ' syncing' : state === 'error' ? ' error' : '');
+  pill.innerHTML = (state === 'ok' ? '&#10003; ' : state === 'syncing' ? '&#8635; ' : '&#9888; ') + label;
+}
+
+/* Navigation & UI Controls */
+function navigate(view) {
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+  document.getElementById('view-' + view).classList.remove('hidden');
+  if (window.innerWidth <= 960) {
+    document.getElementById('sidebar').classList.remove('mobile-open');
+  }
+  renderAll();
+}
+
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const mw = document.getElementById('mainWrap');
+  if (window.innerWidth <= 960) {
+    sb.classList.toggle('mobile-open');
+  } else {
+    const collapsed = sb.classList.toggle('collapsed');
+    mw.classList.toggle('expanded', collapsed);
+    if (ws) {
+      ws.settings.sidebarCollapsed = collapsed;
+      queueSave();
+    }
+  }
+}
+
+function toggleTheme() {
+  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  if (ws) {
+    ws.settings.theme = next;
+    queueSave();
+  }
+}
+
+function togglePrivacy() {
+  document.body.classList.toggle('privacy-mode');
+  showToast(document.body.classList.contains('privacy-mode') ? 'Privacy blur enabled' : 'Privacy blur off');
+}
+
+function updateAccent(hex) {
+  document.documentElement.style.setProperty('--accent', hex);
+  if (ws) {
+    ws.settings.accentColor = hex;
+    queueSave();
+  }
+}
+
+function applySettings() {
+  if (!ws || !ws.settings) return;
+  document.documentElement.setAttribute('data-theme', ws.settings.theme || 'light');
+  if (ws.settings.accentColor) {
+    document.documentElement.style.setProperty('--accent', ws.settings.accentColor);
+    document.getElementById('setAccentColor').value = ws.settings.accentColor;
+  }
+  if (ws.settings.sidebarCollapsed && window.innerWidth > 960) {
+    document.getElementById('sidebar').classList.add('collapsed');
+    document.getElementById('mainWrap').classList.add('expanded');
+  }
+  document.getElementById('setProfileName').value = session.user.name || '';
+  document.getElementById('setProfileInst').value = session.user.institution || '';
+}
+
+/* Profiles */
+function renderProfileSwitcher() {
+  const sel = document.getElementById('profileSwitcher');
+  sel.innerHTML = ws.profiles.map(p =>
+    `<option value="${p.id}" ${p.id === ws.activeProfileId ? 'selected' : ''}>${escapeHtml(p.name)}</option>`
+  ).join('');
+}
+
+function switchActiveProfile(id) {
+  ws.activeProfileId = id;
+  queueSave();
+  renderAll();
+}
+
+/* Date Helpers */
+function getTargetDate() {
+  const d = new Date();
+  d.setDate(d.getDate() + selectedDateOffset);
+  return d;
+}
+
+function formatDateKey(d) {
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+function shiftDay(offset) {
+  selectedDateOffset = offset === 0 ? 0 : selectedDateOffset + offset;
+  renderToday();
+}
+
+/* Render Master */
+function renderAll() {
+  if (!ws) return;
+  renderProfileSwitcher();
+  renderToday();
+  renderTeaching();
+  renderResearch();
+  renderOpportunities();
+  renderAnalytics();
+  renderVault();
+}
+
+/* 1. TODAY RENDER */
+function renderToday() {
+  const d = getTargetDate();
+  const dateKey = formatDateKey(d);
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dayName = dayNames[d.getDay()];
+
+  document.getElementById('todayHeading').textContent =
+    selectedDateOffset === 0 ? `Today — ${dayName}` :
+    selectedDateOffset === 1 ? `Tomorrow — ${dayName}` :
+    selectedDateOffset === -1 ? `Yesterday — ${dayName}` : dayName;
+  document.getElementById('todaySubheading').textContent = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  const dayRecord = ws.dailyOverrides[dateKey] || { holiday: false, logs: {} };
+  const hBtn = document.getElementById('holidayBtn');
+  hBtn.className = dayRecord.holiday ? 'btn btn-sm btn-danger' : 'btn btn-sm btn-ghost';
+  hBtn.innerHTML = dayRecord.holiday ? '&#127958;&#65039; Holiday Mode: ON' : '&#127958;&#65039; Holiday Mode: Off';
+
+  const slots = ws.timetable
+    .filter(s => s.profileId === ws.activeProfileId && s.day === dayName)
+    .sort((a, b) => a.time.localeCompare(b.time));
+
+  const container = document.getElementById('todaySlotsList');
+  if (slots.length === 0) {
+    container.innerHTML = `<p style="color:var(--muted); font-size:13.5px; padding:12px 0;">No recurring lectures scheduled for ${dayName}.</p>`;
+  } else {
+    container.innerHTML = slots.map(s => {
+      const subj = ws.subjects.find(x => x.id === s.subjectId) || { title: 'Deleted Subject', code: '', color: '#1E3A8A' };
+      const status = dayRecord.logs[s.id] || '';
+      return `
+        <div class="slot-card ${dayRecord.holiday || status === 'canceled' ? 'dimmed' : ''}" style="border-left-color:${subj.color || 'var(--accent)'}">
+          <div>
+            <div style="font-size:12px; font-weight:700; color:var(--accent);">${escapeHtml(s.time)} &bull; ${escapeHtml(s.sessionType)}</div>
+            <div style="font-weight:700; font-size:15px;">${escapeHtml(subj.title)} <span style="color:var(--muted); font-weight:500;">${subj.code ? '(' + escapeHtml(subj.code) + ')' : ''}</span></div>
+            <div style="font-size:12.5px; color:var(--muted);">Batch: ${escapeHtml(s.batch || 'N/A')} &bull; Room: ${escapeHtml(s.room || 'N/A')}</div>
+          </div>
+          <div class="status-pills">
+            <button class="st-btn ${status==='delivered'?'active-delivered':''}" onclick="setSlotStatus('${dateKey}','${s.id}','delivered')">Delivered</button>
+            <button class="st-btn ${status==='proxy'?'active-proxy':''}" onclick="setSlotStatus('${dateKey}','${s.id}','proxy')">Proxy</button>
+            <button class="st-btn ${status==='canceled'?'active-canceled':''}" onclick="setSlotStatus('${dateKey}','${s.id}','canceled')">Canceled</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Urgent Deadlines (72h)
+  const now = new Date();
+  const in72 = new Date(now.getTime() + 72 * 3600 * 1000);
+  const urgent = [];
+  ws.opportunities.forEach(o => {
+    if (o.deadline && o.status !== 'Selected' && o.status !== 'Archived') {
+      const dt = new Date(o.deadline);
+      if (dt >= new Date(now.toDateString()) && dt <= in72) {
+        urgent.push({ title: o.title, sub: `${o.institution} (${o.mode})`, date: o.deadline, type: 'Opportunity' });
+      }
+    }
+  });
+  ws.research.forEach(r => {
+    if (r.deadline && r.stage !== 'Published') {
+      const dt = new Date(r.deadline);
+      if (dt >= new Date(now.toDateString()) && dt <= in72) {
+        urgent.push({ title: r.title, sub: r.journal || 'Manuscript', date: r.deadline, type: 'Research' });
+      }
+    }
+  });
+
+  const uList = document.getElementById('urgentDeadlinesList');
+  uList.innerHTML = urgent.length === 0
+    ? `<p style="color:var(--muted); font-size:13px;">No deadlines closing in the next 72 hours.</p>`
+    : urgent.map(u => `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--border);">
+        <div>
+          <span class="badge b-crimson">${u.type}</span>
+          <strong style="margin-left:6px; font-size:13.5px;">${escapeHtml(u.title)}</strong>
+          <div style="font-size:12px; color:var(--muted);">${escapeHtml(u.sub)}</div>
+        </div>
+        <span class="badge b-amber">Due ${u.date}</span>
+      </div>
+    `).join('');
+
+  // Priorities & Scratchpad
+  document.getElementById('priorityList').innerHTML = ws.priorities.map((p, idx) => `
+    <div style="display:flex; align-items:center; justify-content:space-between; padding:7px 0; border-bottom:1px solid var(--border);">
+      <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13.5px; text-decoration:${p.done?'line-through':'none'}; color:${p.done?'var(--muted)':'var(--ink)'}">
+        <input type="checkbox" style="width:auto;" ${p.done?'checked':''} onchange="togglePriority(${idx})">
+        ${escapeHtml(p.text)}
+      </label>
+      <button class="btn btn-sm btn-danger" onclick="deletePriority(${idx})" style="padding:2px 7px;">&times;</button>
+    </div>
+  `).join('') || `<p style="color:var(--muted); font-size:13px;">Add up to 3 top priorities for today.</p>`;
+
+  document.getElementById('scratchpadArea').value = ws.scratchpad || '';
+}
+
+function setSlotStatus(dateKey, slotId, status) {
+  ws.dailyOverrides[dateKey] = ws.dailyOverrides[dateKey] || { holiday: false, logs: {} };
+  ws.dailyOverrides[dateKey].logs[slotId] = ws.dailyOverrides[dateKey].logs[slotId] === status ? '' : status;
+  queueSave();
+  renderToday();
+  renderAnalytics();
+}
+
+function toggleHoliday() {
+  const dateKey = formatDateKey(getTargetDate());
+  ws.dailyOverrides[dateKey] = ws.dailyOverrides[dateKey] || { holiday: false, logs: {} };
+  ws.dailyOverrides[dateKey].holiday = !ws.dailyOverrides[dateKey].holiday;
+  queueSave();
+  renderToday();
+}
+
+function addPriority() {
+  const inp = document.getElementById('newPriorityInput');
+  const txt = inp.value.trim();
+  if (!txt) return;
+  ws.priorities.push({ text: txt, done: false });
+  inp.value = '';
+  queueSave();
+  renderToday();
+}
+
+function togglePriority(idx) {
+  ws.priorities[idx].done = !ws.priorities[idx].done;
+  queueSave();
+  renderToday();
+}
+
+function deletePriority(idx) {
+  ws.priorities.splice(idx, 1);
+  queueSave();
+  renderToday();
+}
+
+function updateScratchpad(val) {
+  ws.scratchpad = val;
+  queueSave();
+}
+
+/* 2. TEACHING RENDER */
+function renderTeaching() {
+  const activeSubs = ws.subjects.filter(s => s.profileId === ws.activeProfileId);
+  const sGrid = document.getElementById('subjectsGrid');
+
+  if (activeSubs.length === 0) {
+    sGrid.innerHTML = `<p style="color:var(--muted); font-size:13.5px; grid-column:1/-1;">No subjects added yet for this term. Click <strong>+ Add Subject</strong> to create one.</p>`;
+  } else {
+    sGrid.innerHTML = activeSubs.map(s => {
+      const units = s.units || [];
+      const doneCount = units.filter(u => u.done).length;
+      const pct = units.length ? Math.round((doneCount / units.length) * 100) : 0;
+      return `
+        <div class="card" style="border-top:4px solid ${s.color || 'var(--accent)'}; padding:15px;">
+          <div style="display:flex; justify-content:space-between; align-items:start;">
+            <span class="badge b-accent">${escapeHtml(s.paperType)}</span>
+            <button class="btn btn-sm btn-danger" style="padding:2px 7px;" onclick="deleteSubject('${s.id}')">&times;</button>
+          </div>
+          <h4 style="margin:8px 0 2px; font-size:15px;">${escapeHtml(s.title)}</h4>
+          <p style="font-size:12px; color:var(--muted);">${escapeHtml(s.code || '')} &bull; ${escapeHtml(s.program || '')}</p>
+
+          <div style="margin-top:12px;">
+            <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600;">
+              <span>Syllabus Progress</span>
+              <span>${pct}% (${doneCount}/${units.length})</span>
+            </div>
+            <div class="prog-track"><div class="prog-fill" style="width:${pct}%; background:${s.color || 'var(--accent)'}"></div></div>
+          </div>
+
+          <div style="margin-top:10px; max-height:110px; overflow-y:auto;">
+            ${units.map((u, i) => `
+              <label style="display:flex; align-items:center; gap:6px; font-size:12px; padding:3px 0; cursor:pointer; color:${u.done?'var(--muted)':'var(--ink)'}">
+                <input type="checkbox" style="width:auto;" ${u.done?'checked':''} onchange="toggleSyllabusUnit('${s.id}', ${i})">
+                <span style="text-decoration:${u.done?'line-through':'none'}">${escapeHtml(u.title)}</span>
+              </label>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  const dayFilter = document.getElementById('dayFilterSelect').value;
+  const slots = ws.timetable
+    .filter(s => s.profileId === ws.activeProfileId && (dayFilter === 'ALL' || s.day === dayFilter));
+
+  const ttList = document.getElementById('masterTimetableList');
+  if (slots.length === 0) {
+    ttList.innerHTML = `<p style="color:var(--muted); font-size:13.5px;">No timetable slots configured yet.</p>`;
+  } else {
+    ttList.innerHTML = slots.map(s => {
+      const subj = ws.subjects.find(x => x.id === s.subjectId) || { title: 'Subject', color: '#1E3A8A' };
+      return `
+        <div class="slot-card" style="border-left-color:${subj.color || 'var(--accent)'}">
+          <div>
+            <span class="badge b-neutral">${s.day}</span>
+            <strong style="margin-left:8px; font-size:14px;">${escapeHtml(s.time)} — ${escapeHtml(subj.title)}</strong>
+            <div style="font-size:12px; color:var(--muted); margin-top:3px;">${escapeHtml(s.sessionType)} &bull; Batch: ${escapeHtml(s.batch || '-')} &bull; Room: ${escapeHtml(s.room || '-')}</div>
+          </div>
+          <button class="btn btn-sm btn-danger" onclick="deleteSlot('${s.id}')">Remove</button>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function toggleSyllabusUnit(subjId, unitIdx) {
+  const s = ws.subjects.find(x => x.id === subjId);
+  if (s && s.units[unitIdx]) {
+    s.units[unitIdx].done = !s.units[unitIdx].done;
+    queueSave();
+    renderTeaching();
+  }
+}
+
+function deleteSubject(id) {
+  if (!confirm('Delete this subject?')) return;
+  ws.subjects = ws.subjects.filter(s => s.id !== id);
+  queueSave();
+  renderTeaching();
+}
+
+function deleteSlot(id) {
+  ws.timetable = ws.timetable.filter(s => s.id !== id);
+  queueSave();
+  renderTeaching();
+  renderToday();
+}
+
+/* 3. RESEARCH KANBAN */
+const STAGES = ['Drafting', 'Peer Review', 'Revisions', 'Published'];
+
+function renderResearch() {
+  const board = document.getElementById('kanbanBoard');
+  board.innerHTML = STAGES.map(stage => {
+    const items = ws.research.filter(r => r.stage === stage);
+    return `
+      <div class="kanban-col" ondragover="event.preventDefault(); this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="dropResearch(event, '${stage}')">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+          <strong style="font-size:13.5px;">${stage}</strong>
+          <span class="badge b-neutral">${items.length}</span>
+        </div>
+        ${items.map(r => `
+          <div class="k-card" draggable="true" ondragstart="dragResearch(event, '${r.id}')">
+            <div style="display:flex; justify-content:space-between; gap:6px;">
+              <span class="badge b-accent">${escapeHtml(r.type || 'Paper')}</span>
+              <button onclick="deleteResearch('${r.id}')" style="border:none;background:none;color:var(--crimson);cursor:pointer;">&times;</button>
+            </div>
+            <div style="font-weight:700; font-size:13.5px; margin:6px 0 3px;">${escapeHtml(r.title)}</div>
+            <div style="font-size:12px; color:var(--muted);">${escapeHtml(r.journal || 'Target Journal TBD')}</div>
+            ${r.deadline ? `<div style="font-size:11.5px; color:var(--amber); margin-top:5px; font-weight:600;">Due: ${r.deadline}</div>` : ''}
+            <div style="margin-top:8px;">
+              <select onchange="moveResearch('${r.id}', this.value)" style="padding:4px 7px; font-size:11.5px;">
+                ${STAGES.map(st => `<option value="${st}" ${st===stage?'selected':''}>${st}</option>`).join('')}
+              </select>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }).join('');
+}
+
+let draggedResId = null;
+function dragResearch(e, id) { draggedResId = id; }
+function dropResearch(e, targetStage) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (draggedResId) moveResearch(draggedResId, targetStage);
+}
+function moveResearch(id, stage) {
+  const item = ws.research.find(r => r.id === id);
+  if (item) {
+    item.stage = stage;
+    queueSave();
+    renderResearch();
+    renderAnalytics();
+  }
+}
+function deleteResearch(id) {
+  ws.research = ws.research.filter(r => r.id !== id);
+  queueSave();
+  renderResearch();
+}
+
+/* 4. OPPORTUNITIES & FELLOWSHIPS */
+function setOppFilter(f) {
+  oppFilter = f;
+  document.querySelectorAll('[data-opp-filter]').forEach(b => {
+    b.className = b.dataset.oppFilter === f ? 'btn btn-sm btn-primary' : 'btn btn-sm btn-ghost';
+  });
+  renderOpportunities();
+}
+
+function renderOpportunities() {
+  let list = ws.opportunities;
+  if (oppFilter === 'Walk-in') list = list.filter(o => o.mode === 'Walk-in');
+  if (oppFilter === 'Free') list = list.filter(o => o.feeType === 'Free');
+  if (oppFilter === 'International') list = list.filter(o => o.scope === 'International');
+
+  const container = document.getElementById('opportunitiesList');
+  if (list.length === 0) {
+    container.innerHTML = `<p style="color:var(--muted); font-size:13.5px; grid-column:1/-1;">No opportunities matching this filter. Click <strong>+ Add Opportunity</strong> to log a college opening or fellowship.</p>`;
+    return;
+  }
+
+  container.innerHTML = list.map(o => `
+    <div class="card sensitive" style="display:flex; flex-direction:column; justify-content:space-between;">
+      <div>
+        <div style="display:flex; justify-content:space-between; gap:6px; flex-wrap:wrap; margin-bottom:8px;">
+          <span class="badge ${o.mode==='Walk-in'?'b-crimson':'b-accent'}">${escapeHtml(o.mode)}</span>
+          <span class="badge ${o.feeType==='Free'?'b-emerald':'b-amber'}">${o.feeType === 'Free' ? 'Free' : 'Paid: ' + escapeHtml(o.feeAmount || '')}</span>
+          <span class="badge b-neutral">${escapeHtml(o.scope || 'Local')}</span>
+        </div>
+        <h4 style="font-size:15.5px; margin-bottom:3px;">${escapeHtml(o.title)}</h4>
+        <p style="font-size:12.5px; color:var(--muted); margin-bottom:8px;">${escapeHtml(o.institution)}</p>
+        ${o.deadline ? `<div style="font-size:12px; font-weight:600; color:var(--amber); margin-bottom:6px;">Deadline / Date: ${o.deadline}</div>` : ''}
+        ${o.notes ? `<p style="font-size:12px; color:var(--muted); background:var(--surface-2); padding:8px; border-radius:8px; margin-bottom:10px;">${escapeHtml(o.notes)}</p>` : ''}
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding-top:10px; border-top:1px solid var(--border);">
+        <select onchange="updateOppStatus('${o.id}', this.value)" style="padding:5px 8px; font-size:12px;">
+          ${['Spotted', 'Preparing Docs', 'Applied', 'Interview Scheduled', 'Selected', 'Archived'].map(st =>
+            `<option value="${st}" ${o.status===st?'selected':''}>${st}</option>`
+          ).join('')}
+        </select>
+        ${o.link ? `<a href="${escapeHtml(o.link)}" target="_blank" class="btn btn-ghost btn-sm">Portal</a>` : ''}
+        <button class="btn btn-danger btn-sm" onclick="deleteOpp('${o.id}')">&times;</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateOppStatus(id, st) {
+  const o = ws.opportunities.find(x => x.id === id);
+  if (o) { o.status = st; queueSave(); renderAnalytics(); }
+}
+function deleteOpp(id) {
+  ws.opportunities = ws.opportunities.filter(x => x.id !== id);
+  queueSave();
+  renderOpportunities();
+  renderAnalytics();
+}
+
+/* 5. ANALYTICS */
+function renderAnalytics() {
+  let deliveredCount = 0;
+  let proxyCount = 0;
+  const bySessionType = {};
+
+  Object.values(ws.dailyOverrides || {}).forEach(dayRec => {
+    if (dayRec.holiday) return;
+    Object.entries(dayRec.logs || {}).forEach(([slotId, status]) => {
+      if (status === 'delivered' || status === 'proxy') {
+        if (status === 'delivered') deliveredCount++;
+        if (status === 'proxy') proxyCount++;
+        const slot = ws.timetable.find(s => s.id === slotId);
+        const sType = slot ? slot.sessionType : 'Theory Lecture';
+        bySessionType[sType] = (bySessionType[sType] || 0) + 1;
+      }
+    });
+  });
+
+  const allUnits = ws.subjects.flatMap(s => s.units || []);
+  const avgSyllabus = allUnits.length ? Math.round((allUnits.filter(u => u.done).length / allUnits.length) * 100) : 0;
+  const publishedCount = ws.research.filter(r => r.stage === 'Published').length;
+  const activeOpps = ws.opportunities.filter(o => o.status !== 'Archived').length;
+
+  document.getElementById('analyticsKpis').innerHTML = `
+    <div class="card"><div style="font-size:12px;color:var(--muted);">Lectures Delivered</div><div class="serif" style="font-size:28px;font-weight:700;color:var(--accent);">${deliveredCount}</div><div style="font-size:11.5px;color:var(--emerald);">+${proxyCount} proxy sessions</div></div>
+    <div class="card"><div style="font-size:12px;color:var(--muted);">Avg Syllabus Completion</div><div class="serif" style="font-size:28px;font-weight:700;">${avgSyllabus}%</div><div style="font-size:11.5px;color:var(--muted);">Across ${ws.subjects.length} subjects</div></div>
+    <div class="card"><div style="font-size:12px;color:var(--muted);">Research Pipeline</div><div class="serif" style="font-size:28px;font-weight:700;color:var(--emerald);">${publishedCount} / ${ws.research.length}</div><div style="font-size:11.5px;color:var(--muted);">Published vs. total</div></div>
+    <div class="card"><div style="font-size:12px;color:var(--muted);">Active Opportunities</div><div class="serif" style="font-size:28px;font-weight:700;color:var(--amber);">${activeOpps}</div><div style="font-size:11.5px;color:var(--muted);">Calls &amp; fellowships</div></div>
+  `;
+
+  const maxType = Math.max(1, ...Object.values(bySessionType));
+  document.getElementById('chartSessionTypes').innerHTML = Object.keys(bySessionType).length === 0
+    ? `<p style="color:var(--muted); font-size:13px;">Mark lectures as Delivered in the Today tab to populate workload charts.</p>`
+    : Object.entries(bySessionType).map(([type, count]) => `
+      <div style="margin-bottom:12px;">
+        <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:600;">
+          <span>${escapeHtml(type)}</span><span>${count} sessions</span>
+        </div>
+        <div class="prog-track"><div class="prog-fill" style="width:${Math.round((count/maxType)*100)}%"></div></div>
+      </div>
+    `).join('');
+
+  const freeOpps = ws.opportunities.filter(o => o.feeType === 'Free').length;
+  const paidOpps = ws.opportunities.filter(o => o.feeType === 'Paid').length;
+  const walkins = ws.opportunities.filter(o => o.mode === 'Walk-in').length;
+  document.getElementById('chartOpportunities').innerHTML = `
+    <div style="display:flex; flex-direction:column; gap:10px; font-size:13.5px;">
+      <div style="display:flex; justify-content:space-between;"><span>Free Applications</span><span class="badge b-emerald">${freeOpps}</span></div>
+      <div style="display:flex; justify-content:space-between;"><span>Paid Applications</span><span class="badge b-amber">${paidOpps}</span></div>
+      <div style="display:flex; justify-content:space-between;"><span>Walk-in Interviews</span><span class="badge b-crimson">${walkins}</span></div>
+    </div>
+  `;
+}
+
+function copyAppraisalReport() {
+  const text = `ATHENA ACADEMIC SUMMARY — ${session.user.name} (${session.user.institution})\n` +
+    `Active Subjects: ${ws.subjects.length}\n` +
+    `Research Manuscripts: ${ws.research.length} (${ws.research.filter(r=>r.stage==='Published').length} Published)\n` +
+    `Opportunities Tracked: ${ws.opportunities.length}`;
+  navigator.clipboard.writeText(text);
+  showToast('Semester appraisal summary copied to clipboard');
+}
+
+/* 6. SETTINGS & VAULT */
+function renderVault() {
+  const list = document.getElementById('vaultLinksList');
+  list.innerHTML = (ws.vaultLinks || []).map((v, i) => `
+    <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--border);">
+      <div>
+        <a href="${escapeHtml(v.url)}" target="_blank" style="font-weight:600; color:var(--accent); text-decoration:none; font-size:13.5px;">${escapeHtml(v.title)} &#8599;</a>
+        <div style="font-size:11.5px; color:var(--muted);">${escapeHtml(v.category || 'Resource')}</div>
+      </div>
+      <button class="btn btn-sm btn-danger" onclick="deleteVault(${i})">&times;</button>
+    </div>
+  `).join('') || `<p style="color:var(--muted); font-size:13px;">No saved links yet.</p>`;
+}
+
+function deleteVault(i) {
+  ws.vaultLinks.splice(i, 1);
+  queueSave();
+  renderVault();
+}
+
+async function saveProfileSettings() {
+  const name = document.getElementById('setProfileName').value.trim();
+  const institution = document.getElementById('setProfileInst').value.trim();
+  const newPassword = document.getElementById('setNewPass').value;
+  const res = await apiCall({
+    action: 'updateProfile',
+    userId: session.user.userId,
+    token: session.token,
+    name, institution, newPassword
+  });
+  if (res.success) {
+    session.user = res.user;
+    localStorage.setItem('athena_session', JSON.stringify(session));
+    document.getElementById('sideUserName').textContent = res.user.name;
+    document.getElementById('sideUserInst').textContent = res.user.institution;
+    document.getElementById('setNewPass').value = '';
+    showToast('Account details updated');
+  } else {
+    showToast(res.error || 'Update failed');
+  }
+}
+
+function exportJsonBackup() {
+  const blob = new Blob([JSON.stringify(ws, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `Athena_Backup_${formatDateKey(new Date())}.json`;
+  a.click();
+}
+
+/* SLIDE-OVER DRAWERS */
+function openDrawer(type) {
+  const titleEl = document.getElementById('drawerTitle');
+  const bodyEl = document.getElementById('drawerBody');
+
+  if (type === 'profile') {
+    titleEl.textContent = 'Add College / Term Profile';
+    bodyEl.innerHTML = `
+      <div class="field"><label>Term / Profile Label</label><input id="dProfName" placeholder="e.g., New College — Even Sem 2027"></div>
+      <div class="field"><label>Institution Name</label><input id="dProfInst" placeholder="e.g., Veer Narmad South Gujarat University"></div>
+      <button class="btn btn-primary" style="width:100%;" onclick="saveNewProfile()">Create &amp; Switch Profile</button>
+    `;
+  } else if (type === 'types') {
+    titleEl.textContent = 'Custom Paper & Session Types';
+    bodyEl.innerHTML = `
+      <div class="field">
+        <label>Paper / Course Types (comma-separated)</label>
+        <input id="dPaperTypes" value="${escapeHtml((ws.settings.paperTypes || []).join(', '))}">
+      </div>
+      <div class="field">
+        <label>Session / Delivery Types (comma-separated)</label>
+        <input id="dSessionTypes" value="${escapeHtml((ws.settings.sessionTypes || []).join(', '))}">
+      </div>
+      <button class="btn btn-primary" style="width:100%;" onclick="saveCustomTypes()">Save Custom Types</button>
+    `;
+  } else if (type === 'subject') {
+    titleEl.textContent = 'Add Custom Subject';
+    bodyEl.innerHTML = `
+      <div class="field"><label>Subject Title</label><input id="dSubjTitle" placeholder="e.g., Educational Psychology"></div>
+      <div class="field"><label>Paper Code</label><input id="dSubjCode" placeholder="e.g., PSY-201"></div>
+      <div class="field"><label>Class / Program</label><input id="dSubjProg" placeholder="e.g., FY B.A. Sem 1"></div>
+      <div class="field"><label>Paper Type</label>
+        <select id="dSubjType">${(ws.settings.paperTypes || ['Core']).map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>Badge Color</label><input type="color" id="dSubjColor" value="#1E3A8A" style="height:40px;"></div>
+      <div class="field"><label>Syllabus Units (one unit/topic per line)</label><textarea id="dSubjUnits" rows="5" placeholder="Unit 1: Introduction to Educational Psychology&#10;Unit 2: Learning Theories&#10;Unit 3: Intelligence &amp; Creativity"></textarea></div>
+      <button class="btn btn-primary" style="width:100%;" onclick="saveNewSubject()">Save Subject</button>
+    `;
+  } else if (type === 'slot') {
+    titleEl.textContent = 'Add Weekly Timetable Slot';
+    const subs = ws.subjects.filter(s => s.profileId === ws.activeProfileId);
+    if (subs.length === 0) {
+      bodyEl.innerHTML = `<p style="color:var(--muted); margin-bottom:14px;">Please add at least one subject first before creating timetable slots.</p><button class="btn btn-primary" onclick="openDrawer('subject')">+ Add Subject Now</button>`;
+    } else {
+      bodyEl.innerHTML = `
+        <div class="field"><label>Subject</label>
+          <select id="dSlotSubj">${subs.map(s => `<option value="${s.id}">${escapeHtml(s.title)}</option>`).join('')}</select>
+        </div>
+        <div class="field"><label>Day of Week</label>
+          <select id="dSlotDay">
+            <option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option>
+          </select>
+        </div>
+        <div class="field"><label>Time Slot</label><input id="dSlotTime" placeholder="e.g., 10:00 AM - 10:50 AM"></div>
+        <div class="field"><label>Session Type</label>
+          <select id="dSlotType">${(ws.settings.sessionTypes || ['Theory Lecture']).map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}</select>
+        </div>
+        <div class="field"><label>Batch / Division</label><input id="dSlotBatch" placeholder="e.g., Div A"></div>
+        <div class="field"><label>Room / Hall</label><input id="dSlotRoom" placeholder="e.g., Room 204"></div>
+        <button class="btn btn-primary" style="width:100%;" onclick="saveNewSlot()">Add to Timetable</button>
+      `;
+    }
+  } else if (type === 'research') {
+    titleEl.textContent = 'Add Research / Seminar';
+    bodyEl.innerHTML = `
+      <div class="field"><label>Title</label><input id="dResTitle" placeholder="Paper or conference title"></div>
+      <div class="field"><label>Category</label><select id="dResType"><option>Journal Paper</option><option>Conference Presentation</option><option>Book Chapter</option><option>Seminar / Workshop</option></select></div>
+      <div class="field"><label>Target Journal / Event</label><input id="dResJournal" placeholder="e.g., International Journal of Psychology"></div>
+      <div class="field"><label>Stage</label><select id="dResStage">${STAGES.map(s => `<option>${s}</option>`).join('')}</select></div>
+      <div class="field"><label>Submission Deadline (optional)</label><input type="date" id="dResDate"></div>
+      <button class="btn btn-primary" style="width:100%;" onclick="saveNewResearch()">Add to Pipeline</button>
+    `;
+  } else if (type === 'opportunity') {
+    titleEl.textContent = 'Add Opportunity / Fellowship';
+    bodyEl.innerHTML = `
+      <div class="field"><label>Role / Fellowship Title</label><input id="dOppTitle" placeholder="e.g., Visiting Professor / MSCA Fellowship"></div>
+      <div class="field"><label>College / University</label><input id="dOppInst" placeholder="Institution name &amp; city"></div>
+      <div class="field"><label>Scope</label><select id="dOppScope"><option>Local</option><option>National</option><option>International</option></select></div>
+      <div class="field"><label>Application Mode</label><select id="dOppMode"><option>Walk-in</option><option>Online Portal</option><option>Email</option><option>Post / Hard Copy</option></select></div>
+      <div class="field"><label>Fee Status</label><select id="dOppFeeType"><option>Free</option><option>Paid</option></select></div>
+      <div class="field"><label>Fee Amount (if Paid)</label><input id="dOppFeeAmt" placeholder="e.g., &#8377;500 or &euro;50"></div>
+      <div class="field"><label>Deadline / Walk-in Date</label><input type="date" id="dOppDate"></div>
+      <div class="field"><label>Portal / Notice URL</label><input id="dOppLink" placeholder="https://..."></div>
+      <div class="field"><label>Required Documents &amp; Notes</label><textarea id="dOppNotes" rows="3" placeholder="e.g., Carry original PhD, GSET, 2 sets of CV &amp; NOC"></textarea></div>
+      <button class="btn btn-primary" style="width:100%;" onclick="saveNewOpp()">Save Opportunity</button>
+    `;
+  } else if (type === 'vault') {
+    titleEl.textContent = 'Add Resource Vault Link';
+    bodyEl.innerHTML = `
+      <div class="field"><label>Link Title</label><input id="dVaultTitle" placeholder="e.g., Rosenberg Self-Esteem Scale Form"></div>
+      <div class="field"><label>Category</label><input id="dVaultCat" placeholder="e.g., Scale / Google Form / Drive Folder"></div>
+      <div class="field"><label>URL</label><input id="dVaultUrl" placeholder="https://..."></div>
+      <button class="btn btn-primary" style="width:100%;" onclick="saveNewVault()">Save to Vault</button>
+    `;
+  }
+
+  document.getElementById('drawerBackdrop').classList.add('open');
+  document.getElementById('drawerPanel').classList.add('open');
+}
+
+function closeDrawer() {
+  document.getElementById('drawerBackdrop').classList.remove('open');
+  document.getElementById('drawerPanel').classList.remove('open');
+}
+
+function saveNewProfile() {
+  const name = document.getElementById('dProfName').value.trim();
+  const inst = document.getElementById('dProfInst').value.trim();
+  if (!name) return;
+  const id = 'prof_' + Date.now().toString(36);
+  ws.profiles.push({ id, name, institution: inst, active: true });
+  ws.activeProfileId = id;
+  queueSave(); closeDrawer(); renderAll();
+}
+
+function saveCustomTypes() {
+  ws.settings.paperTypes = document.getElementById('dPaperTypes').value.split(',').map(s => s.trim()).filter(Boolean);
+  ws.settings.sessionTypes = document.getElementById('dSessionTypes').value.split(',').map(s => s.trim()).filter(Boolean);
+  queueSave(); closeDrawer(); showToast('Custom types updated');
+}
+
+function saveNewSubject() {
+  const title = document.getElementById('dSubjTitle').value.trim();
+  if (!title) return;
+  const units = document.getElementById('dSubjUnits').value.split('\n').map(l => l.trim()).filter(Boolean).map(t => ({ title: t, done: false }));
+  ws.subjects.push({
+    id: 'sub_' + Date.now().toString(36),
+    profileId: ws.activeProfileId,
+    title,
+    code: document.getElementById('dSubjCode').value.trim(),
+    program: document.getElementById('dSubjProg').value.trim(),
+    paperType: document.getElementById('dSubjType').value,
+    color: document.getElementById('dSubjColor').value,
+    units
+  });
+  queueSave(); closeDrawer(); renderAll();
+}
+
+function saveNewSlot() {
+  ws.timetable.push({
+    id: 'slt_' + Date.now().toString(36),
+    profileId: ws.activeProfileId,
+    subjectId: document.getElementById('dSlotSubj').value,
+    day: document.getElementById('dSlotDay').value,
+    time: document.getElementById('dSlotTime').value.trim() || '09:00 AM',
+    sessionType: document.getElementById('dSlotType').value,
+    batch: document.getElementById('dSlotBatch').value.trim(),
+    room: document.getElementById('dSlotRoom').value.trim()
+  });
+  queueSave(); closeDrawer(); renderAll();
+}
+
+function saveNewResearch() {
+  const title = document.getElementById('dResTitle').value.trim();
+  if (!title) return;
+  ws.research.push({
+    id: 'res_' + Date.now().toString(36),
+    title,
+    type: document.getElementById('dResType').value,
+    journal: document.getElementById('dResJournal').value.trim(),
+    stage: document.getElementById('dResStage').value,
+    deadline: document.getElementById('dResDate').value
+  });
+  queueSave(); closeDrawer(); renderAll();
+}
+
+function saveNewOpp() {
+  const title = document.getElementById('dOppTitle').value.trim();
+  if (!title) return;
+  ws.opportunities.push({
+    id: 'opp_' + Date.now().toString(36),
+    title,
+    institution: document.getElementById('dOppInst').value.trim(),
+    scope: document.getElementById('dOppScope').value,
+    mode: document.getElementById('dOppMode').value,
+    feeType: document.getElementById('dOppFeeType').value,
+    feeAmount: document.getElementById('dOppFeeAmt').value.trim(),
+    deadline: document.getElementById('dOppDate').value,
+    link: document.getElementById('dOppLink').value.trim(),
+    notes: document.getElementById('dOppNotes').value.trim(),
+    status: 'Spotted'
+  });
+  queueSave(); closeDrawer(); renderAll();
+}
+
+function saveNewVault() {
+  const title = document.getElementById('dVaultTitle').value.trim();
+  const url = document.getElementById('dVaultUrl').value.trim();
+  if (!title || !url) return;
+  ws.vaultLinks = ws.vaultLinks || [];
+  ws.vaultLinks.push({ title, category: document.getElementById('dVaultCat').value.trim(), url });
+  queueSave(); closeDrawer(); renderVault();
+}
+
+function escapeHtml(str) {
+  return String(str || '').replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2600);
+}
+</script>
+</body>
+</html>
