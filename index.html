@@ -7,35 +7,42 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,600;6..72,700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
   :root {
-    --bg: #F8F9FA;
+    --bg: #F3F5F9;
     --surface: #FFFFFF;
-    --surface-2: #F1F5F9;
+    --surface-2: #F8FAFC;
+    --surface-3: #EEF2F6;
     --border: #E2E8F0;
     --ink: #0F172A;
     --muted: #475569;
     --accent: #1E3A8A;
-    --accent-soft: rgba(30, 58, 138, 0.09);
+    --accent-grad: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
+    --accent-soft: rgba(30, 58, 138, 0.08);
     --amber: #D97706;
     --amber-soft: rgba(217, 119, 6, 0.12);
     --emerald: #059669;
     --emerald-soft: rgba(5, 150, 105, 0.12);
     --crimson: #DC2626;
     --crimson-soft: rgba(220, 38, 38, 0.12);
-    --shadow: 0 4px 20px rgba(15, 23, 42, 0.05);
-    --radius: 14px;
-    --sidebar-w: 248px;
+    --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.04);
+    --shadow-md: 0 10px 28px -6px rgba(15, 23, 42, 0.08), 0 4px 10px -4px rgba(15, 23, 42, 0.04);
+    --shadow-lg: 0 20px 45px -10px rgba(15, 23, 42, 0.14);
+    --radius: 16px;
+    --sidebar-w: 256px;
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
   }
   [data-theme="dark"] {
-    --bg: #0B0F19;
+    --bg: #070B14;
     --surface: #111827;
-    --surface-2: #1E293B;
-    --border: #1F2937;
+    --surface-2: #161F33;
+    --surface-3: #1E293B;
+    --border: #1F2A3E;
     --ink: #F8FAFC;
     --muted: #94A3B8;
     --accent: #60A5FA;
+    --accent-grad: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
     --accent-soft: rgba(96, 165, 250, 0.14);
     --amber: #FBBF24;
     --amber-soft: rgba(251, 191, 36, 0.14);
@@ -43,7 +50,9 @@
     --emerald-soft: rgba(52, 211, 153, 0.14);
     --crimson: #F87171;
     --crimson-soft: rgba(248, 113, 113, 0.14);
-    --shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
+    --shadow-md: 0 12px 30px -6px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 22px 50px -10px rgba(0, 0, 0, 0.65);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -63,102 +72,82 @@
     filter: blur(7px);
     user-select: none;
     pointer-events: none;
-    transition: filter 0.25s var(--ease);
   }
   .sensitive { transition: filter 0.25s var(--ease); }
 
   /* Auth Screen */
   .auth-wrap {
     min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     padding: 20px;
-    background: radial-gradient(circle at top right, var(--accent-soft), transparent 45%), var(--bg);
+    background: radial-gradient(circle at 85% 15%, var(--accent-soft), transparent 45%),
+                radial-gradient(circle at 15% 85%, var(--amber-soft), transparent 45%), var(--bg);
   }
   .auth-card {
-    width: 100%;
-    max-width: 440px;
+    width: 100%; max-width: 440px;
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 32px;
-    box-shadow: var(--shadow);
+    border-radius: 22px;
+    padding: 34px;
+    box-shadow: var(--shadow-lg);
     animation: fadeSlideUp 0.45s var(--ease);
   }
-  .brand-mark {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-  }
+  .brand-mark { display: inline-flex; align-items: center; gap: 11px; }
   .brand-icon {
-    width: 36px; height: 36px;
-    border-radius: 10px;
-    background: var(--accent);
-    color: #fff;
+    width: 38px; height: 38px; border-radius: 11px;
+    background: var(--accent-grad); color: #fff;
     display: grid; place-items: center;
-    font-weight: 700; font-size: 18px;
+    font-weight: 700; font-size: 20px;
+    box-shadow: 0 4px 12px var(--accent-soft);
   }
-  [data-theme="dark"] .brand-icon { color: #0B0F19; }
+  [data-theme="dark"] .brand-icon { color: #070B14; }
   .auth-tabs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    background: var(--surface-2);
-    padding: 4px;
-    border-radius: 10px;
-    margin: 20px 0;
+    display: grid; grid-template-columns: 1fr 1fr;
+    background: var(--surface-3); padding: 4px; border-radius: 11px; margin: 22px 0;
   }
   .auth-tab {
-    border: none; background: transparent;
-    padding: 9px; border-radius: 8px;
-    font-weight: 600; font-size: 13.5px;
-    color: var(--muted); cursor: pointer;
+    border: none; background: transparent; padding: 9px; border-radius: 8px;
+    font-weight: 600; font-size: 13.5px; color: var(--muted); cursor: pointer;
     transition: all 0.2s var(--ease);
   }
   .auth-tab.active {
-    background: var(--surface);
-    color: var(--ink);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    background: var(--surface); color: var(--ink); box-shadow: var(--shadow-sm);
   }
 
   /* Inputs & Buttons */
   .field { margin-bottom: 14px; }
   .field label {
-    display: block; font-size: 12.5px; font-weight: 600;
-    color: var(--muted); margin-bottom: 5px;
+    display: block; font-size: 12px; font-weight: 600;
+    color: var(--muted); margin-bottom: 5px; letter-spacing: 0.01em;
   }
   input, select, textarea {
-    width: 100%;
-    padding: 10px 12px;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--ink);
-    font-family: inherit;
-    font-size: 14px;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%; padding: 10px 12px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--ink);
+    font-family: inherit; font-size: 13.5px;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
   }
   input:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-soft);
+    outline: none; background: var(--surface);
+    border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft);
   }
   .btn {
     display: inline-flex; align-items: center; justify-content: center; gap: 7px;
-    padding: 10px 16px;
-    border-radius: 10px;
-    border: 1px solid transparent;
-    font-weight: 600; font-size: 13.5px;
-    cursor: pointer;
-    transition: transform 0.15s var(--ease), background 0.2s, opacity 0.2s;
+    padding: 10px 16px; border-radius: 10px; border: 1px solid transparent;
+    font-weight: 600; font-size: 13.5px; cursor: pointer;
+    transition: transform 0.15s var(--ease), box-shadow 0.2s, background 0.2s;
   }
-  .btn:active { transform: scale(0.98); }
-  .btn-primary { background: var(--accent); color: #fff; }
-  [data-theme="dark"] .btn-primary { color: #0B0F19; }
-  .btn-primary:hover { opacity: 0.92; }
-  .btn-ghost { background: var(--surface-2); color: var(--ink); border-color: var(--border); }
-  .btn-ghost:hover { border-color: var(--accent); }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--accent-grad); color: #fff;
+    box-shadow: 0 4px 12px var(--accent-soft);
+  }
+  [data-theme="dark"] .btn-primary { color: #070B14; }
+  .btn-primary:hover { box-shadow: 0 6px 18px var(--accent-soft); transform: translateY(-1px); }
+  .btn-ghost {
+    background: var(--surface); color: var(--ink); border-color: var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
   .btn-sm { padding: 6px 11px; font-size: 12.5px; border-radius: 8px; }
   .btn-danger { background: var(--crimson-soft); color: var(--crimson); }
 
@@ -168,89 +157,75 @@
     width: var(--sidebar-w);
     background: var(--surface);
     border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: 0; bottom: 0; left: 0;
-    z-index: 40;
-    transition: transform 0.32s var(--ease), width 0.32s var(--ease);
+    display: flex; flex-direction: column;
+    position: fixed; top: 0; bottom: 0; left: 0; z-index: 40;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.34s var(--ease);
   }
-  .sidebar.collapsed {
-    transform: translateX(-100%);
-  }
+  .sidebar.collapsed { transform: translateX(-100%); }
   .sidebar-header {
-    height: 60px;
-    padding: 0 18px;
+    height: 62px; padding: 0 18px;
     display: flex; align-items: center; justify-content: space-between;
     border-bottom: 1px solid var(--border);
   }
-  .nav-list { padding: 14px 12px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+  .nav-list { padding: 14px 12px; flex: 1; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
   .nav-item {
     display: flex; align-items: center; gap: 11px;
-    padding: 11px 13px;
-    border-radius: 10px;
-    border: none; background: transparent;
-    color: var(--muted);
-    font-weight: 500; font-size: 14px;
-    cursor: pointer; text-align: left;
+    padding: 11px 13px; border-radius: 11px; border: none;
+    background: transparent; color: var(--muted);
+    font-weight: 500; font-size: 13.5px; cursor: pointer; text-align: left;
     transition: all 0.2s var(--ease);
   }
-  .nav-item:hover { background: var(--surface-2); color: var(--ink); }
+  .nav-item:hover { background: var(--surface-3); color: var(--ink); transform: translateX(2px); }
   .nav-item.active {
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-weight: 600;
+    background: var(--accent-soft); color: var(--accent); font-weight: 700;
+    box-shadow: inset 3px 0 0 var(--accent);
   }
   .sidebar-footer {
-    padding: 14px;
-    border-top: 1px solid var(--border);
-    font-size: 12.5px;
+    padding: 14px; border-top: 1px solid var(--border);
+    background: var(--surface-2); font-size: 12.5px;
   }
 
   .main-wrap {
-    flex: 1;
-    margin-left: var(--sidebar-w);
-    transition: margin-left 0.32s var(--ease);
-    display: flex; flex-direction: column;
-    min-width: 0;
+    flex: 1; margin-left: var(--sidebar-w);
+    transition: margin-left 0.34s var(--ease);
+    display: flex; flex-direction: column; min-width: 0;
   }
   .main-wrap.expanded { margin-left: 0; }
 
   /* Topbar */
   .topbar {
-    height: 60px;
-    background: var(--surface);
+    height: 62px;
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border);
-    padding: 0 20px;
+    padding: 0 22px;
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
     position: sticky; top: 0; z-index: 30;
   }
+  [data-theme="dark"] .topbar { background: rgba(17,24,39,0.85); }
   .top-left, .top-right { display: flex; align-items: center; gap: 10px; }
   .icon-btn {
-    width: 36px; height: 36px;
-    border-radius: 9px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    color: var(--ink);
-    display: grid; place-items: center;
-    cursor: pointer;
-    transition: all 0.2s;
+    width: 36px; height: 36px; border-radius: 10px;
+    border: 1px solid var(--border); background: var(--surface); color: var(--ink);
+    display: grid; place-items: center; cursor: pointer;
+    box-shadow: var(--shadow-sm); transition: all 0.2s;
   }
-  .icon-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .icon-btn:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-1px); }
   .sync-pill {
     display: inline-flex; align-items: center; gap: 6px;
-    padding: 5px 11px; border-radius: 999px;
+    padding: 5px 12px; border-radius: 999px;
     font-size: 12px; font-weight: 600;
     background: var(--emerald-soft); color: var(--emerald);
   }
   .sync-pill.syncing { background: var(--amber-soft); color: var(--amber); }
   .sync-pill.error { background: var(--crimson-soft); color: var(--crimson); }
 
-  /* Content & Cards */
-  .content { padding: 24px; max-width: 1280px; width: 100%; margin: 0 auto; }
-  .view-section { animation: fadeSlideUp 0.32s var(--ease); }
+  /* Content & Layered Cards */
+  .content { padding: 24px; max-width: 1340px; width: 100%; margin: 0 auto; }
+  .view-section { animation: fadeSlideUp 0.34s var(--ease); }
   @keyframes fadeSlideUp {
-    from { opacity: 0; transform: translateY(10px); }
+    from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
   }
   .grid-2 { display: grid; grid-template-columns: 1.55fr 1fr; gap: 20px; }
@@ -260,14 +235,19 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 18px;
-    box-shadow: var(--shadow);
+    padding: 20px;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.22s var(--ease), box-shadow 0.22s var(--ease);
+  }
+  .card-banner {
+    background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2) 100%);
+    border-top: 3px solid var(--accent);
   }
   .card-header {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 14px; gap: 10px;
+    margin-bottom: 14px; gap: 10px; flex-wrap: wrap;
   }
-  .card-title { font-size: 16px; font-weight: 700; }
+  .card-title { font-size: 16px; font-weight: 700; letter-spacing: -0.01em; }
 
   /* Badges */
   .badge {
@@ -279,23 +259,31 @@
   .b-emerald { background: var(--emerald-soft); color: var(--emerald); }
   .b-amber { background: var(--amber-soft); color: var(--amber); }
   .b-crimson { background: var(--crimson-soft); color: var(--crimson); }
-  .b-neutral { background: var(--surface-2); color: var(--muted); }
+  .b-neutral { background: var(--surface-3); color: var(--muted); }
 
-  /* Timetable & Lecture Slots */
-  .slot-card {
-    display: flex; align-items: center; justify-content: space-between; gap: 14px;
-    padding: 14px;
-    border: 1px solid var(--border);
-    border-left: 4px solid var(--accent);
-    border-radius: 12px;
-    margin-bottom: 10px;
+  /* Rich Lecture Slot Card on Today View */
+  .lecture-card {
     background: var(--surface);
-    transition: transform 0.2s var(--ease), opacity 0.2s;
+    border: 1px solid var(--border);
+    border-left: 5px solid var(--accent);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.22s var(--ease);
   }
-  .slot-card.dimmed { opacity: 0.45; text-decoration: line-through; }
+  .lecture-card:hover { box-shadow: var(--shadow-md); transform: translateY(-1px); }
+  .lecture-card.dimmed { opacity: 0.45; }
+  .lecture-top {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+  .lecture-log-bar {
+    margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border);
+    display: grid; grid-template-columns: 1fr 110px; gap: 8px; align-items: center;
+  }
   .status-pills { display: flex; gap: 5px; flex-wrap: wrap; }
   .st-btn {
-    padding: 5px 9px; border-radius: 7px; font-size: 11.5px; font-weight: 600;
+    padding: 5px 10px; border-radius: 8px; font-size: 11.5px; font-weight: 600;
     border: 1px solid var(--border); background: var(--surface-2); color: var(--muted);
     cursor: pointer; transition: all 0.15s;
   }
@@ -303,60 +291,126 @@
   .st-btn.active-proxy { background: var(--amber); color: #fff; border-color: var(--amber); }
   .st-btn.active-canceled { background: var(--crimson); color: #fff; border-color: var(--crimson); }
 
+  /* Visual Weekly Timetable Matrix */
+  .week-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(185px, 1fr));
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .day-col {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 12px;
+    display: flex; flex-direction: column; gap: 9px;
+    min-height: 280px;
+  }
+  .day-col-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding-bottom: 8px; border-bottom: 1px solid var(--border);
+    font-weight: 700; font-size: 13.5px;
+  }
+  .mini-slot {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    border-radius: 10px;
+    padding: 10px;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    transition: transform 0.18s var(--ease);
+  }
+  .mini-slot:hover { transform: translateY(-2px); }
+
+  /* Interactive Day Pills & Time Preset Chips in Drawer */
+  .day-pill-grid {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px;
+  }
+  .day-pill {
+    padding: 9px 4px; text-align: center; border-radius: 9px;
+    border: 1px solid var(--border); background: var(--surface-2);
+    font-size: 12.5px; font-weight: 600; color: var(--muted);
+    cursor: pointer; user-select: none; transition: all 0.18s var(--ease);
+  }
+  .day-pill.selected {
+    background: var(--accent); color: #fff; border-color: var(--accent);
+    box-shadow: 0 3px 10px var(--accent-soft);
+  }
+  [data-theme="dark"] .day-pill.selected { color: #070B14; }
+  .chip-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+  .preset-chip {
+    padding: 4px 9px; border-radius: 999px; font-size: 11.5px; font-weight: 500;
+    background: var(--surface-3); color: var(--ink); border: 1px solid var(--border);
+    cursor: pointer; transition: all 0.15s;
+  }
+  .preset-chip:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Calendar Grid */
+  .cal-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;
+  }
+  .cal-head {
+    text-align: center; font-size: 12px; font-weight: 700; color: var(--muted);
+    padding: 6px 0;
+  }
+  .cal-cell {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    min-height: 92px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.18s var(--ease);
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .cal-cell:hover { border-color: var(--accent); background: var(--surface); transform: translateY(-1px); }
+  .cal-cell.today-cell { border: 2px solid var(--accent); background: var(--surface); }
+  .cal-cell.holiday-cell { background: var(--crimson-soft); }
+  .cal-dots { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 6px; }
+  .cal-tag {
+    font-size: 10px; font-weight: 600; padding: 2px 5px; border-radius: 5px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+  }
+
+  /* Logbook Table */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { padding: 11px 12px; text-align: left; border-bottom: 1px solid var(--border); }
+  th { background: var(--surface-2); font-weight: 700; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.03em; }
+  tr:hover td { background: var(--surface-2); }
+
   /* Kanban */
   .kanban-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
   .kanban-col {
-    background: var(--surface-2);
-    border-radius: 12px;
-    padding: 12px;
-    min-height: 360px;
-    border: 1px dashed transparent;
-    transition: border-color 0.2s, background 0.2s;
+    background: var(--surface-2); border-radius: 14px; padding: 12px; min-height: 360px;
+    border: 1px dashed var(--border); transition: all 0.2s;
   }
   .kanban-col.drag-over { border-color: var(--accent); background: var(--accent-soft); }
   .k-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px;
-    margin-bottom: 10px;
-    cursor: grab;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.03);
-    transition: transform 0.15s;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 11px;
+    padding: 13px; margin-bottom: 10px; cursor: grab; box-shadow: var(--shadow-sm);
   }
-  .k-card:active { cursor: grabbing; transform: scale(0.98); }
 
-  /* Progress Bar */
-  .prog-track {
-    height: 8px; background: var(--surface-2);
-    border-radius: 999px; overflow: hidden; margin-top: 6px;
-  }
-  .prog-fill {
-    height: 100%; background: var(--accent);
-    border-radius: 999px;
-    transition: width 0.5s var(--ease);
-  }
+  /* Progress */
+  .prog-track { height: 8px; background: var(--surface-3); border-radius: 999px; overflow: hidden; margin-top: 6px; }
+  .prog-fill { height: 100%; background: var(--accent); border-radius: 999px; transition: width 0.5s var(--ease); }
 
   /* Slide-Over Drawer */
   .drawer-backdrop {
-    position: fixed; inset: 0;
-    background: rgba(15, 23, 42, 0.45);
-    backdrop-filter: blur(4px);
-    z-index: 60;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.25s var(--ease);
+    position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(5px); z-index: 60;
+    opacity: 0; pointer-events: none; transition: opacity 0.25s var(--ease);
   }
   .drawer-backdrop.open { opacity: 1; pointer-events: auto; }
   .drawer {
     position: fixed; top: 0; right: 0; bottom: 0;
-    width: 100%; max-width: 460px;
-    background: var(--surface);
-    border-left: 1px solid var(--border);
-    z-index: 70;
-    padding: 24px;
-    overflow-y: auto;
-    transform: translateX(100%);
-    transition: transform 0.32s var(--ease);
+    width: 100%; max-width: 480px;
+    background: var(--surface); border-left: 1px solid var(--border);
+    z-index: 70; padding: 24px; overflow-y: auto;
+    box-shadow: var(--shadow-lg);
+    transform: translateX(100%); transition: transform 0.34s var(--ease);
   }
   .drawer.open { transform: translateX(0); }
 
@@ -364,22 +418,20 @@
   .toast {
     position: fixed; bottom: 20px; right: 20px;
     background: var(--ink); color: var(--surface);
-    padding: 11px 18px; border-radius: 10px;
-    font-size: 13px; font-weight: 500;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    z-index: 100;
-    transform: translateY(80px); opacity: 0;
-    transition: all 0.3s var(--ease);
+    padding: 11px 18px; border-radius: 11px;
+    font-size: 13px; font-weight: 500; box-shadow: var(--shadow-lg);
+    z-index: 100; transform: translateY(80px); opacity: 0; transition: all 0.3s var(--ease);
   }
   .toast.show { transform: translateY(0); opacity: 1; }
 
-  /* Responsive */
   @media (max-width: 960px) {
     .grid-2, .kanban-grid { grid-template-columns: 1fr; }
+    .grid-3 { grid-template-columns: 1fr; }
     .grid-4 { grid-template-columns: repeat(2, 1fr); }
     .sidebar { transform: translateX(-100%); }
-    .sidebar.mobile-open { transform: translateX(0); box-shadow: 20px 0 50px rgba(0,0,0,0.25); }
+    .sidebar.mobile-open { transform: translateX(0); box-shadow: 20px 0 50px rgba(0,0,0,0.3); }
     .main-wrap { margin-left: 0 !important; }
+    .lecture-log-bar { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -391,7 +443,7 @@
     <div class="brand-mark">
       <div class="brand-icon serif">A</div>
       <div>
-        <h1 class="serif" style="font-size:24px; line-height:1.1;">Athena</h1>
+        <h1 class="serif" style="font-size:26px; line-height:1.05;">Athena</h1>
         <p style="font-size:12px; color:var(--muted);">Academic &amp; Faculty Workspace</p>
       </div>
     </div>
@@ -429,7 +481,6 @@
       </div>
 
       <p id="authError" style="color:var(--crimson); font-size:12.5px; margin-bottom:12px;" class="hidden"></p>
-
       <button type="submit" class="btn btn-primary" style="width:100%;" id="authSubmitBtn">Sign In to Athena</button>
     </form>
   </div>
@@ -437,38 +488,37 @@
 
 <!-- MAIN WORKSPACE -->
 <div id="appShell" class="app-shell hidden">
-  <!-- Collapsible Left Sidebar -->
   <aside id="sidebar" class="sidebar">
     <div class="sidebar-header">
-      <div class="brand-mark" style="margin:0;">
-        <div class="brand-icon serif" style="width:30px;height:30px;font-size:16px;">A</div>
-        <span class="serif" style="font-size:20px;font-weight:700;">Athena</span>
+      <div class="brand-mark">
+        <div class="brand-icon serif" style="width:32px;height:32px;font-size:17px;">A</div>
+        <span class="serif" style="font-size:21px;font-weight:700;">Athena</span>
       </div>
       <button class="icon-btn" onclick="toggleSidebar()" title="Hide Sidebar">&#10005;</button>
     </div>
 
     <nav class="nav-list">
-      <button class="nav-item active" data-view="today" onclick="navigate('today')">&#9728;&#65039; Today</button>
-      <button class="nav-item" data-view="teaching" onclick="navigate('teaching')">&#128218; Teaching &amp; Timetable</button>
+      <button class="nav-item active" data-view="today" onclick="navigate('today')">&#9728;&#65039; Today &amp; Daily Log</button>
+      <button class="nav-item" data-view="calendar" onclick="navigate('calendar')">&#128197; Academic Calendar</button>
+      <button class="nav-item" data-view="teaching" onclick="navigate('teaching')">&#128218; Timetable &amp; Subjects</button>
+      <button class="nav-item" data-view="logbook" onclick="navigate('logbook')">&#128221; Teaching Logbook &amp; PDF</button>
       <button class="nav-item" data-view="research" onclick="navigate('research')">&#128300; Research Pipeline</button>
       <button class="nav-item" data-view="opportunities" onclick="navigate('opportunities')">&#127758; Opportunities &amp; Calls</button>
-      <button class="nav-item" data-view="analytics" onclick="navigate('analytics')">&#128202; Analytics &amp; Reports</button>
-      <button class="nav-item" data-view="settings" onclick="navigate('settings')">&#9881;&#65039; Settings &amp; Vault</button>
+      <button class="nav-item" data-view="analytics" onclick="navigate('analytics')">&#128202; Analytics &amp; Settings</button>
     </nav>
 
     <div class="sidebar-footer">
-      <div style="font-weight:600;" id="sideUserName">Professor</div>
+      <div style="font-weight:700;" id="sideUserName">Professor</div>
       <div style="color:var(--muted); font-size:11.5px; margin-bottom:10px;" id="sideUserInst">Institution</div>
       <button class="btn btn-ghost btn-sm" style="width:100%;" onclick="logout()">Sign Out</button>
     </div>
   </aside>
 
-  <!-- Main Content Area -->
   <div id="mainWrap" class="main-wrap">
     <header class="topbar">
       <div class="top-left">
         <button class="icon-btn" onclick="toggleSidebar()" title="Toggle Navigation">&#9776;</button>
-        <select id="profileSwitcher" onchange="switchActiveProfile(this.value)" style="width:auto; max-width:230px; padding:6px 10px; font-size:13px; font-weight:600;"></select>
+        <select id="profileSwitcher" onchange="switchActiveProfile(this.value)" style="width:auto; max-width:240px; padding:6px 10px; font-size:13px; font-weight:600;"></select>
       </div>
       <div class="top-right">
         <span id="syncPill" class="sync-pill" onclick="forceSync()" style="cursor:pointer;" title="Click to sync now">&#10003; Synced</span>
@@ -478,44 +528,53 @@
     </header>
 
     <main class="content">
-      <!-- 1. TODAY VIEW -->
+      <!-- 1. TODAY & DAILY LOG VIEW -->
       <section id="view-today" class="view-section">
-        <div class="card-header" style="flex-wrap:wrap;">
-          <div>
-            <h2 class="serif" style="font-size:26px;" id="todayHeading">Today's Schedule</h2>
-            <p style="font-size:13px; color:var(--muted);" id="todaySubheading"></p>
-          </div>
-          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-            <button class="btn btn-ghost btn-sm" onclick="shiftDay(-1)">&larr; Yesterday</button>
-            <button class="btn btn-ghost btn-sm" onclick="shiftDay(0)">Today</button>
-            <button class="btn btn-ghost btn-sm" onclick="shiftDay(1)">Tomorrow &rarr;</button>
-            <button class="btn btn-sm" id="holidayBtn" onclick="toggleHoliday()">&#127958;&#65039; Holiday Mode: Off</button>
+        <div class="card card-banner" style="margin-bottom:20px;">
+          <div class="card-header" style="margin-bottom:0;">
+            <div>
+              <h2 class="serif" style="font-size:28px;" id="todayHeading">Today's Schedule</h2>
+              <p style="font-size:13px; color:var(--muted);" id="todaySubheading"></p>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <button class="btn btn-ghost btn-sm" onclick="shiftDay(-1)">&larr; Prev</button>
+              <button class="btn btn-ghost btn-sm" onclick="shiftDay(0)">Today</button>
+              <button class="btn btn-ghost btn-sm" onclick="shiftDay(1)">Next &rarr;</button>
+              <button class="btn btn-sm" id="holidayBtn" onclick="toggleHoliday()">&#127958;&#65039; Holiday: Off</button>
+            </div>
           </div>
         </div>
 
         <div class="grid-2">
           <div>
-            <div class="card" style="margin-bottom:18px;">
+            <!-- Scheduled Lectures with Topic Logging -->
+            <div class="card" style="margin-bottom:20px;">
               <div class="card-header">
-                <span class="card-title">Lectures &amp; Sessions</span>
-                <button class="btn btn-primary btn-sm" onclick="openDrawer('slot')">+ Add Weekly Slot</button>
+                <span class="card-title">Scheduled Lectures &amp; Topics Covered</span>
+                <button class="btn btn-primary btn-sm" onclick="openDrawer('slot')">+ Quick Add Class</button>
               </div>
               <div id="todaySlotsList"></div>
             </div>
 
-            <div class="card">
+            <!-- Extra College Work / Non-Lecture Activities -->
+            <div class="card" style="margin-bottom:20px;">
               <div class="card-header">
-                <span class="card-title">Urgent Deadlines (Next 72 Hours)</span>
+                <span class="card-title">Extra College Work &amp; Duties (This Date)</span>
+                <button class="btn btn-primary btn-sm" onclick="openDrawer('extraWork')">+ Log Extra Work</button>
               </div>
+              <div id="todayExtraWorkList"></div>
+            </div>
+
+            <!-- Urgent Deadlines -->
+            <div class="card">
+              <div class="card-header"><span class="card-title">Urgent Deadlines (Next 72 Hours)</span></div>
               <div id="urgentDeadlinesList"></div>
             </div>
           </div>
 
           <div style="display:flex; flex-direction:column; gap:18px;">
             <div class="card">
-              <div class="card-header">
-                <span class="card-title">Top 3 Daily Priorities</span>
-              </div>
+              <div class="card-header"><span class="card-title">Top Daily Priorities</span></div>
               <div style="display:flex; gap:8px; margin-bottom:12px;">
                 <input type="text" id="newPriorityInput" placeholder="Add priority task..." onkeydown="if(event.key==='Enter') addPriority()">
                 <button class="btn btn-primary btn-sm" onclick="addPriority()">Add</button>
@@ -534,64 +593,116 @@
         </div>
       </section>
 
-      <!-- 2. TEACHING & TIMETABLE VIEW -->
+      <!-- 2. ACADEMIC CALENDAR VIEW -->
+      <section id="view-calendar" class="view-section hidden">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="serif" style="font-size:26px;" id="calMonthTitle">Month Year</h2>
+              <p style="font-size:12.5px; color:var(--muted);">Click any date to inspect or log lectures, topics, extra duties, or holidays.</p>
+            </div>
+            <div style="display:flex; gap:8px;">
+              <button class="btn btn-ghost btn-sm" onclick="changeCalMonth(-1)">&larr; Prev Month</button>
+              <button class="btn btn-ghost btn-sm" onclick="changeCalMonth(0)">Current</button>
+              <button class="btn btn-ghost btn-sm" onclick="changeCalMonth(1)">Next Month &rarr;</button>
+            </div>
+          </div>
+          <div class="cal-grid" id="calendarGrid"></div>
+        </div>
+      </section>
+
+      <!-- 3. TIMETABLE & SUBJECTS VIEW -->
       <section id="view-teaching" class="view-section hidden">
-        <div class="card-header" style="flex-wrap:wrap;">
+        <div class="card-header">
           <div>
-            <h2 class="serif" style="font-size:26px;">Teaching &amp; Timetable</h2>
-            <p style="font-size:13px; color:var(--muted);">Manage college terms, custom subjects, paper types, and recurring weekly classes.</p>
+            <h2 class="serif" style="font-size:26px;">Weekly Timetable &amp; Subjects</h2>
+            <p style="font-size:13px; color:var(--muted);">Tap <strong>+ Add Class</strong> under any day or add a subject across multiple days at once.</p>
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button class="btn btn-ghost btn-sm" onclick="openDrawer('profile')">+ College / Term</button>
             <button class="btn btn-ghost btn-sm" onclick="openDrawer('types')">&#9881;&#65039; Custom Types</button>
             <button class="btn btn-primary btn-sm" onclick="openDrawer('subject')">+ Add Subject</button>
-            <button class="btn btn-primary btn-sm" onclick="openDrawer('slot')">+ Add Class Slot</button>
+            <button class="btn btn-primary btn-sm" onclick="openDrawer('slot')">+ Multi-Day Class Builder</button>
           </div>
         </div>
 
+        <!-- Visual Mon-Sat Timetable Matrix -->
         <div class="card" style="margin-bottom:20px;">
           <div class="card-header">
-            <span class="card-title">Subjects &amp; Syllabus Progress</span>
+            <span class="card-title">Visual Weekly Schedule (Monday – Saturday)</span>
+            <span style="font-size:12px; color:var(--muted);">Scroll horizontally on smaller screens</span>
+          </div>
+          <div class="week-grid" id="weeklyMatrix"></div>
+        </div>
+
+        <!-- Subjects & Syllabus Progress -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Subjects &amp; Syllabus Units</span>
           </div>
           <div id="subjectsGrid" class="grid-3"></div>
         </div>
+      </section>
+
+      <!-- 4. TEACHING LOGBOOK & PDF EXPORT VIEW -->
+      <section id="view-logbook" class="view-section hidden">
+        <div class="card card-banner" style="margin-bottom:20px;">
+          <div class="card-header">
+            <div>
+              <h2 class="serif" style="font-size:26px;">Teaching Diary &amp; Activity Logbook</h2>
+              <p style="font-size:13px; color:var(--muted);">Complete record of every delivered lecture, topic covered, and extra academic activity.</p>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+              <select id="logPeriodType" onchange="toggleLogPeriodInputs()" style="width:auto; padding:7px 10px; font-size:13px;">
+                <option value="month">Month-Wise</option>
+                <option value="week">Week-Wise</option>
+                <option value="all">All Term Logs</option>
+              </select>
+              <input type="month" id="logMonthPicker" onchange="renderLogbook()" style="width:auto; padding:6px 10px; font-size:13px;">
+              <input type="date" id="logWeekPicker" onchange="renderLogbook()" class="hidden" style="width:auto; padding:6px 10px; font-size:13px;" title="Pick any date in the target week">
+              <select id="logSubjectFilter" onchange="renderLogbook()" style="width:auto; padding:7px 10px; font-size:13px;"></select>
+              <button class="btn btn-primary btn-sm" onclick="downloadLogbookPdf()">&#128196; Download PDF Report</button>
+            </div>
+          </div>
+        </div>
 
         <div class="card">
-          <div class="card-header">
-            <span class="card-title">Master Weekly Timetable</span>
-            <select id="dayFilterSelect" onchange="renderTeaching()" style="width:auto; padding:6px 10px; font-size:13px;">
-              <option value="ALL">All Days</option>
-              <option value="Monday">Monday</option>
-              <option value="Tuesday">Tuesday</option>
-              <option value="Wednesday">Wednesday</option>
-              <option value="Thursday">Thursday</option>
-              <option value="Friday">Friday</option>
-              <option value="Saturday">Saturday</option>
-            </select>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date &amp; Day</th>
+                  <th>Type</th>
+                  <th>Subject / Activity</th>
+                  <th>Time / Batch</th>
+                  <th>Topic Covered / Details</th>
+                  <th>Attendance / Hrs</th>
+                </tr>
+              </thead>
+              <tbody id="logbookTableBody"></tbody>
+            </table>
           </div>
-          <div id="masterTimetableList"></div>
         </div>
       </section>
 
-      <!-- 3. RESEARCH PIPELINE VIEW -->
+      <!-- 5. RESEARCH PIPELINE VIEW -->
       <section id="view-research" class="view-section hidden">
         <div class="card-header">
           <div>
             <h2 class="serif" style="font-size:26px;">Research &amp; Publications</h2>
-            <p style="font-size:13px; color:var(--muted);">Drag cards across stages or tap to update manuscript progress.</p>
+            <p style="font-size:13px; color:var(--muted);">Drag cards across stages or update manuscript status.</p>
           </div>
           <button class="btn btn-primary btn-sm" onclick="openDrawer('research')">+ New Manuscript / Seminar</button>
         </div>
-
         <div class="kanban-grid" id="kanbanBoard"></div>
       </section>
 
-      <!-- 4. OPPORTUNITIES & FELLOWSHIPS VIEW -->
+      <!-- 6. OPPORTUNITIES & FELLOWSHIPS VIEW -->
       <section id="view-opportunities" class="view-section hidden">
-        <div class="card-header" style="flex-wrap:wrap;">
+        <div class="card-header">
           <div>
             <h2 class="serif" style="font-size:26px;">Opportunities &amp; Fellowships</h2>
-            <p style="font-size:13px; color:var(--muted);">Track visiting faculty openings, walk-in interviews, grants, and international fellowships.</p>
+            <p style="font-size:13px; color:var(--muted);">Track visiting faculty calls, walk-in interviews, grants, and international fellowships.</p>
           </div>
           <button class="btn btn-primary btn-sm" onclick="openDrawer('opportunity')">+ Add Opportunity</button>
         </div>
@@ -606,58 +717,36 @@
         <div id="opportunitiesList" class="grid-3"></div>
       </section>
 
-      <!-- 5. ANALYTICS VIEW -->
+      <!-- 7. ANALYTICS & SETTINGS VIEW -->
       <section id="view-analytics" class="view-section hidden">
         <div class="card-header">
           <div>
-            <h2 class="serif" style="font-size:26px;">Academic Analytics &amp; Appraisal</h2>
-            <p style="font-size:13px; color:var(--muted);">Live workload metrics, syllabus completion, and career conversion rates.</p>
+            <h2 class="serif" style="font-size:26px;">Analytics, Vault &amp; Settings</h2>
+            <p style="font-size:13px; color:var(--muted);">Workload metrics, resource links, account controls, and JSON backup.</p>
           </div>
-          <button class="btn btn-primary btn-sm" onclick="copyAppraisalReport()">&#128203; Copy Semester Summary</button>
+          <button class="btn btn-primary btn-sm" onclick="copyAppraisalReport()">&#128203; Copy Appraisal Summary</button>
         </div>
 
         <div class="grid-4" style="margin-bottom:20px;" id="analyticsKpis"></div>
 
-        <div class="grid-2">
+        <div class="grid-2" style="margin-bottom:20px;">
           <div class="card">
             <div class="card-header"><span class="card-title">Delivered Lectures by Session Type</span></div>
             <div id="chartSessionTypes"></div>
           </div>
           <div class="card">
-            <div class="card-header"><span class="card-title">Opportunity &amp; Fee Breakdown</span></div>
+            <div class="card-header"><span class="card-title">Extra Duties &amp; Opportunities Summary</span></div>
             <div id="chartOpportunities"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 6. SETTINGS & VAULT VIEW -->
-      <section id="view-settings" class="view-section hidden">
-        <div class="card-header">
-          <div>
-            <h2 class="serif" style="font-size:26px;">Settings, Profile &amp; Resource Vault</h2>
-            <p style="font-size:13px; color:var(--muted);">Manage your account, quick links, and JSON backups.</p>
           </div>
         </div>
 
         <div class="grid-2">
           <div class="card">
             <div class="card-header"><span class="card-title">Account &amp; Appearance</span></div>
-            <div class="field">
-              <label>Display Name</label>
-              <input type="text" id="setProfileName">
-            </div>
-            <div class="field">
-              <label>Primary Institution</label>
-              <input type="text" id="setProfileInst">
-            </div>
-            <div class="field">
-              <label>New Password (leave blank to keep current)</label>
-              <input type="password" id="setNewPass" placeholder="Min 6 characters">
-            </div>
-            <div class="field">
-              <label>Accent Color</label>
-              <input type="color" id="setAccentColor" style="height:42px; padding:4px;" onchange="updateAccent(this.value)">
-            </div>
+            <div class="field"><label>Display Name</label><input type="text" id="setProfileName"></div>
+            <div class="field"><label>Primary Institution</label><input type="text" id="setProfileInst"></div>
+            <div class="field"><label>New Password (leave blank to keep current)</label><input type="password" id="setNewPass" placeholder="Min 6 characters"></div>
+            <div class="field"><label>Accent Color</label><input type="color" id="setAccentColor" style="height:42px; padding:4px;" onchange="updateAccent(this.value)"></div>
             <div style="display:flex; gap:10px; flex-wrap:wrap;">
               <button class="btn btn-primary btn-sm" onclick="saveProfileSettings()">Save Account Changes</button>
               <button class="btn btn-ghost btn-sm" onclick="exportJsonBackup()">&#11015;&#65039; Export JSON Backup</button>
@@ -669,7 +758,6 @@
               <span class="card-title">Academic Resource Vault</span>
               <button class="btn btn-primary btn-sm" onclick="openDrawer('vault')">+ Add Link</button>
             </div>
-            <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">Store quick links to psychological scales, Google Forms, Drive folders, or portals.</p>
             <div id="vaultLinksList"></div>
           </div>
         </div>
@@ -688,20 +776,28 @@
   <div id="drawerBody"></div>
 </div>
 
+<!-- HIDDEN PDF PRINT TEMPLATE CONTAINER -->
+<div id="pdfPrintContainer" style="display:none;"></div>
+
 <div id="toast" class="toast"></div>
 
 <script>
 const GAS_URL = "https://script.google.com/macros/s/AKfycbwY1r7EplF12pA4xklqulYs2rEujT1Cyn8hANK51TcuyiKi5sHP3tE7tHBimmaNweKAWg/exec";
+const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const STAGES = ['Drafting', 'Peer Review', 'Revisions', 'Published'];
 
 let authMode = 'login';
 let session = JSON.parse(localStorage.getItem('athena_session') || 'null');
 let ws = null;
 let selectedDateOffset = 0;
+let calViewDate = new Date();
 let oppFilter = 'ALL';
 let saveTimer = null;
 
-// Init
 window.addEventListener('DOMContentLoaded', () => {
+  const now = new Date();
+  document.getElementById('logMonthPicker').value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  document.getElementById('logWeekPicker').value = formatDateKey(now);
   if (session && session.user && session.token) {
     bootWorkspace();
   }
@@ -742,7 +838,7 @@ async function handleAuthSubmit(e) {
     } else {
       session = { user: res.user, token: res.token };
       localStorage.setItem('athena_session', JSON.stringify(session));
-      ws = res.workspace;
+      ws = normalizeWorkspace(res.workspace);
       localStorage.setItem('athena_cache_' + res.user.userId, JSON.stringify(ws));
       enterApp();
     }
@@ -755,21 +851,34 @@ async function handleAuthSubmit(e) {
   }
 }
 
+function normalizeWorkspace(data) {
+  data.dailyOverrides = data.dailyOverrides || {};
+  data.extraWork = data.extraWork || [];
+  data.subjects = data.subjects || [];
+  data.timetable = data.timetable || [];
+  data.priorities = data.priorities || [];
+  data.research = data.research || [];
+  data.opportunities = data.opportunities || [];
+  data.vaultLinks = data.vaultLinks || [];
+  data.settings = data.settings || {};
+  data.settings.extraCategories = data.settings.extraCategories || [
+    'Proxy / Extra Lecture', 'Committee / Event Duty', 'Exam / Evaluation Duty', 'Student Mentorship', 'Administrative / Meeting'
+  ];
+  return data;
+}
+
 async function bootWorkspace() {
   const cached = localStorage.getItem('athena_cache_' + session.user.userId);
   if (cached) {
-    ws = JSON.parse(cached);
+    ws = normalizeWorkspace(JSON.parse(cached));
     enterApp();
   }
   setSyncState('syncing', 'Syncing...');
   try {
     const res = await apiCall({ action: 'load', userId: session.user.userId, token: session.token });
-    if (res.authError) {
-      logout();
-      return;
-    }
+    if (res.authError) { logout(); return; }
     if (res.success && res.workspace) {
-      ws = res.workspace;
+      ws = normalizeWorkspace(res.workspace);
       session.user = res.user;
       localStorage.setItem('athena_session', JSON.stringify(session));
       localStorage.setItem('athena_cache_' + session.user.userId, JSON.stringify(ws));
@@ -793,8 +902,7 @@ function enterApp() {
 
 function logout() {
   localStorage.removeItem('athena_session');
-  session = null;
-  ws = null;
+  session = null; ws = null;
   document.getElementById('appShell').classList.add('hidden');
   document.getElementById('authView').classList.remove('hidden');
 }
@@ -821,10 +929,7 @@ async function forceSync() {
   setSyncState('syncing', 'Syncing...');
   try {
     const res = await apiCall({
-      action: 'save',
-      userId: session.user.userId,
-      token: session.token,
-      workspace: ws
+      action: 'save', userId: session.user.userId, token: session.token, workspace: ws
     });
     if (res.success) setSyncState('ok', 'Synced');
     else setSyncState('error', 'Sync Failed');
@@ -839,14 +944,12 @@ function setSyncState(state, label) {
   pill.innerHTML = (state === 'ok' ? '&#10003; ' : state === 'syncing' ? '&#8635; ' : '&#9888; ') + label;
 }
 
-/* Navigation & UI Controls */
+/* Navigation */
 function navigate(view) {
   document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.view === view));
   document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
   document.getElementById('view-' + view).classList.remove('hidden');
-  if (window.innerWidth <= 960) {
-    document.getElementById('sidebar').classList.remove('mobile-open');
-  }
+  if (window.innerWidth <= 960) document.getElementById('sidebar').classList.remove('mobile-open');
   renderAll();
 }
 
@@ -858,20 +961,14 @@ function toggleSidebar() {
   } else {
     const collapsed = sb.classList.toggle('collapsed');
     mw.classList.toggle('expanded', collapsed);
-    if (ws) {
-      ws.settings.sidebarCollapsed = collapsed;
-      queueSave();
-    }
+    if (ws) { ws.settings.sidebarCollapsed = collapsed; queueSave(); }
   }
 }
 
 function toggleTheme() {
   const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
   document.documentElement.setAttribute('data-theme', next);
-  if (ws) {
-    ws.settings.theme = next;
-    queueSave();
-  }
+  if (ws) { ws.settings.theme = next; queueSave(); }
 }
 
 function togglePrivacy() {
@@ -881,10 +978,7 @@ function togglePrivacy() {
 
 function updateAccent(hex) {
   document.documentElement.style.setProperty('--accent', hex);
-  if (ws) {
-    ws.settings.accentColor = hex;
-    queueSave();
-  }
+  if (ws) { ws.settings.accentColor = hex; queueSave(); }
 }
 
 function applySettings() {
@@ -902,7 +996,6 @@ function applySettings() {
   document.getElementById('setProfileInst').value = session.user.institution || '';
 }
 
-/* Profiles */
 function renderProfileSwitcher() {
   const sel = document.getElementById('profileSwitcher');
   sel.innerHTML = ws.profiles.map(p =>
@@ -916,7 +1009,6 @@ function switchActiveProfile(id) {
   renderAll();
 }
 
-/* Date Helpers */
 function getTargetDate() {
   const d = new Date();
   d.setDate(d.getDate() + selectedDateOffset);
@@ -932,19 +1024,22 @@ function shiftDay(offset) {
   renderToday();
 }
 
-/* Render Master */
 function renderAll() {
   if (!ws) return;
   renderProfileSwitcher();
   renderToday();
+  renderCalendar();
   renderTeaching();
+  renderLogbook();
   renderResearch();
   renderOpportunities();
   renderAnalytics();
   renderVault();
 }
 
-/* 1. TODAY RENDER */
+/* ==========================================================================
+   1. TODAY & DAILY TOPIC / EXTRA WORK LOGGING
+   ========================================================================== */
 function renderToday() {
   const d = getTargetDate();
   const dateKey = formatDateKey(d);
@@ -954,13 +1049,16 @@ function renderToday() {
   document.getElementById('todayHeading').textContent =
     selectedDateOffset === 0 ? `Today — ${dayName}` :
     selectedDateOffset === 1 ? `Tomorrow — ${dayName}` :
-    selectedDateOffset === -1 ? `Yesterday — ${dayName}` : dayName;
-  document.getElementById('todaySubheading').textContent = d.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
+    selectedDateOffset === -1 ? `Yesterday — ${dayName}` : `${dayName}, ${d.toLocaleDateString('en-IN', { day:'numeric', month:'short' })}`;
+  document.getElementById('todaySubheading').textContent = d.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
-  const dayRecord = ws.dailyOverrides[dateKey] || { holiday: false, logs: {} };
+  const dayRecord = ws.dailyOverrides[dateKey] || { holiday: false, logs: {}, topics: {}, attendance: {} };
+  dayRecord.topics = dayRecord.topics || {};
+  dayRecord.attendance = dayRecord.attendance || {};
+
   const hBtn = document.getElementById('holidayBtn');
   hBtn.className = dayRecord.holiday ? 'btn btn-sm btn-danger' : 'btn btn-sm btn-ghost';
-  hBtn.innerHTML = dayRecord.holiday ? '&#127958;&#65039; Holiday Mode: ON' : '&#127958;&#65039; Holiday Mode: Off';
+  hBtn.innerHTML = dayRecord.holiday ? '&#127958;&#65039; Holiday: ON' : '&#127958;&#65039; Holiday: Off';
 
   const slots = ws.timetable
     .filter(s => s.profileId === ws.activeProfileId && s.day === dayName)
@@ -968,26 +1066,71 @@ function renderToday() {
 
   const container = document.getElementById('todaySlotsList');
   if (slots.length === 0) {
-    container.innerHTML = `<p style="color:var(--muted); font-size:13.5px; padding:12px 0;">No recurring lectures scheduled for ${dayName}.</p>`;
+    container.innerHTML = `<div style="text-align:center; padding:22px 12px; color:var(--muted);">
+      <p style="font-size:14px; margin-bottom:10px;">No recurring lectures scheduled for <strong>${dayName}</strong>.</p>
+      <button class="btn btn-ghost btn-sm" onclick="openDrawer('slot', '${dayName === 'Sunday' ? 'Monday' : dayName}')">+ Add ${dayName} Class</button>
+    </div>`;
   } else {
     container.innerHTML = slots.map(s => {
-      const subj = ws.subjects.find(x => x.id === s.subjectId) || { title: 'Deleted Subject', code: '', color: '#1E3A8A' };
+      const subj = ws.subjects.find(x => x.id === s.subjectId) || { title: 'Deleted Subject', code: '', color: '#1E3A8A', units: [] };
       const status = dayRecord.logs[s.id] || '';
+      const topicVal = dayRecord.topics[s.id] || '';
+      const attVal = dayRecord.attendance[s.id] || '';
+      const datalistId = `dl_${s.id}`;
+      const unitOptions = (subj.units || []).map(u => `<option value="${escapeHtml(u.title)}">`).join('');
+
       return `
-        <div class="slot-card ${dayRecord.holiday || status === 'canceled' ? 'dimmed' : ''}" style="border-left-color:${subj.color || 'var(--accent)'}">
-          <div>
-            <div style="font-size:12px; font-weight:700; color:var(--accent);">${escapeHtml(s.time)} &bull; ${escapeHtml(s.sessionType)}</div>
-            <div style="font-weight:700; font-size:15px;">${escapeHtml(subj.title)} <span style="color:var(--muted); font-weight:500;">${subj.code ? '(' + escapeHtml(subj.code) + ')' : ''}</span></div>
-            <div style="font-size:12.5px; color:var(--muted);">Batch: ${escapeHtml(s.batch || 'N/A')} &bull; Room: ${escapeHtml(s.room || 'N/A')}</div>
+        <div class="lecture-card ${dayRecord.holiday || status === 'canceled' ? 'dimmed' : ''}" style="border-left-color:${subj.color || 'var(--accent)'}">
+          <div class="lecture-top">
+            <div>
+              <div style="font-size:12px; font-weight:700; color:var(--accent);">
+                ${s.period ? escapeHtml(s.period) + ' &bull; ' : ''}${escapeHtml(s.time)} &bull; <span class="badge b-neutral">${escapeHtml(s.sessionType)}</span>
+              </div>
+              <div style="font-weight:700; font-size:15.5px; margin-top:3px;">${escapeHtml(subj.title)} <span style="color:var(--muted); font-weight:500;">${subj.code ? '(' + escapeHtml(subj.code) + ')' : ''}</span></div>
+              <div style="font-size:12.5px; color:var(--muted);">Batch: ${escapeHtml(s.batch || 'N/A')} &bull; Room: ${escapeHtml(s.room || 'N/A')}</div>
+            </div>
+            <div class="status-pills">
+              <button class="st-btn ${status==='delivered'?'active-delivered':''}" onclick="setSlotStatus('${dateKey}','${s.id}','delivered')">&#10003; Delivered</button>
+              <button class="st-btn ${status==='proxy'?'active-proxy':''}" onclick="setSlotStatus('${dateKey}','${s.id}','proxy')">Proxy</button>
+              <button class="st-btn ${status==='canceled'?'active-canceled':''}" onclick="setSlotStatus('${dateKey}','${s.id}','canceled')">Canceled</button>
+            </div>
           </div>
-          <div class="status-pills">
-            <button class="st-btn ${status==='delivered'?'active-delivered':''}" onclick="setSlotStatus('${dateKey}','${s.id}','delivered')">Delivered</button>
-            <button class="st-btn ${status==='proxy'?'active-proxy':''}" onclick="setSlotStatus('${dateKey}','${s.id}','proxy')">Proxy</button>
-            <button class="st-btn ${status==='canceled'?'active-canceled':''}" onclick="setSlotStatus('${dateKey}','${s.id}','canceled')">Canceled</button>
+
+          <div class="lecture-log-bar">
+            <div>
+              <input type="text" list="${datalistId}" value="${escapeHtml(topicVal)}"
+                placeholder="Log topic covered in this lecture (or pick unit)..."
+                onchange="saveLectureTopic('${dateKey}', '${s.id}', '${subj.id}', this.value)"
+                style="padding:7px 10px; font-size:12.5px;">
+              <datalist id="${datalistId}">${unitOptions}</datalist>
+            </div>
+            <input type="number" min="0" value="${escapeHtml(attVal)}"
+              placeholder="Students #"
+              title="Student attendance headcount"
+              onchange="saveLectureAttendance('${dateKey}', '${s.id}', this.value)"
+              style="padding:7px 10px; font-size:12.5px;">
           </div>
         </div>
       `;
     }).join('');
+  }
+
+  // Extra College Work on this Date
+  const dayExtra = (ws.extraWork || []).filter(w => w.date === dateKey && w.profileId === ws.activeProfileId);
+  const extraContainer = document.getElementById('todayExtraWorkList');
+  if (dayExtra.length === 0) {
+    extraContainer.innerHTML = `<p style="color:var(--muted); font-size:13px;">No extra duties, committee work, or proxy classes logged for this date.</p>`;
+  } else {
+    extraContainer.innerHTML = dayExtra.map(w => `
+      <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; background:var(--surface-2); border-radius:10px; margin-bottom:8px; border-left:4px solid var(--amber);">
+        <div>
+          <span class="badge b-amber">${escapeHtml(w.category)}</span>
+          <strong style="margin-left:6px; font-size:13.5px;">${escapeHtml(w.title)}</strong>
+          <div style="font-size:12px; color:var(--muted); margin-top:2px;">Duration: ${escapeHtml(w.hours || '1')} hr(s) ${w.notes ? '• ' + escapeHtml(w.notes) : ''}</div>
+        </div>
+        <button class="btn btn-sm btn-danger" onclick="deleteExtraWork('${w.id}')">&times;</button>
+      </div>
+    `).join('');
   }
 
   // Urgent Deadlines (72h)
@@ -1011,8 +1154,7 @@ function renderToday() {
     }
   });
 
-  const uList = document.getElementById('urgentDeadlinesList');
-  uList.innerHTML = urgent.length === 0
+  document.getElementById('urgentDeadlinesList').innerHTML = urgent.length === 0
     ? `<p style="color:var(--muted); font-size:13px;">No deadlines closing in the next 72 hours.</p>`
     : urgent.map(u => `
       <div style="display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--border);">
@@ -1034,25 +1176,58 @@ function renderToday() {
       </label>
       <button class="btn btn-sm btn-danger" onclick="deletePriority(${idx})" style="padding:2px 7px;">&times;</button>
     </div>
-  `).join('') || `<p style="color:var(--muted); font-size:13px;">Add up to 3 top priorities for today.</p>`;
+  `).join('') || `<p style="color:var(--muted); font-size:13px;">Add your top tasks for today.</p>`;
 
   document.getElementById('scratchpadArea').value = ws.scratchpad || '';
 }
 
+function ensureDayRec(dateKey) {
+  ws.dailyOverrides[dateKey] = ws.dailyOverrides[dateKey] || { holiday: false, logs: {}, topics: {}, attendance: {} };
+  ws.dailyOverrides[dateKey].topics = ws.dailyOverrides[dateKey].topics || {};
+  ws.dailyOverrides[dateKey].attendance = ws.dailyOverrides[dateKey].attendance || {};
+  return ws.dailyOverrides[dateKey];
+}
+
 function setSlotStatus(dateKey, slotId, status) {
-  ws.dailyOverrides[dateKey] = ws.dailyOverrides[dateKey] || { holiday: false, logs: {} };
-  ws.dailyOverrides[dateKey].logs[slotId] = ws.dailyOverrides[dateKey].logs[slotId] === status ? '' : status;
+  const rec = ensureDayRec(dateKey);
+  rec.logs[slotId] = rec.logs[slotId] === status ? '' : status;
+  queueSave(); renderToday(); renderAnalytics();
+}
+
+function saveLectureTopic(dateKey, slotId, subjId, topicText) {
+  const rec = ensureDayRec(dateKey);
+  rec.topics[slotId] = topicText.trim();
+  // Auto-mark Delivered if a topic is entered and status was empty
+  if (topicText.trim() && !rec.logs[slotId]) {
+    rec.logs[slotId] = 'delivered';
+  }
+  // Auto-check matching syllabus unit if found
+  const subj = ws.subjects.find(s => s.id === subjId);
+  if (subj && subj.units) {
+    const matched = subj.units.find(u => u.title.toLowerCase() === topicText.trim().toLowerCase());
+    if (matched) matched.done = true;
+  }
   queueSave();
   renderToday();
-  renderAnalytics();
+  showToast('Lecture topic saved to diary');
+}
+
+function saveLectureAttendance(dateKey, slotId, count) {
+  const rec = ensureDayRec(dateKey);
+  rec.attendance[slotId] = count;
+  queueSave();
 }
 
 function toggleHoliday() {
   const dateKey = formatDateKey(getTargetDate());
-  ws.dailyOverrides[dateKey] = ws.dailyOverrides[dateKey] || { holiday: false, logs: {} };
-  ws.dailyOverrides[dateKey].holiday = !ws.dailyOverrides[dateKey].holiday;
-  queueSave();
-  renderToday();
+  const rec = ensureDayRec(dateKey);
+  rec.holiday = !rec.holiday;
+  queueSave(); renderToday(); renderCalendar();
+}
+
+function deleteExtraWork(id) {
+  ws.extraWork = ws.extraWork.filter(w => w.id !== id);
+  queueSave(); renderToday(); renderLogbook(); renderAnalytics();
 }
 
 function addPriority() {
@@ -1060,58 +1235,128 @@ function addPriority() {
   const txt = inp.value.trim();
   if (!txt) return;
   ws.priorities.push({ text: txt, done: false });
-  inp.value = '';
-  queueSave();
-  renderToday();
+  inp.value = ''; queueSave(); renderToday();
+}
+function togglePriority(idx) { ws.priorities[idx].done = !ws.priorities[idx].done; queueSave(); renderToday(); }
+function deletePriority(idx) { ws.priorities.splice(idx, 1); queueSave(); renderToday(); }
+function updateScratchpad(val) { ws.scratchpad = val; queueSave(); }
+
+/* ==========================================================================
+   2. ACADEMIC CALENDAR VIEW
+   ========================================================================== */
+function changeCalMonth(delta) {
+  if (delta === 0) calViewDate = new Date();
+  else calViewDate = new Date(calViewDate.getFullYear(), calViewDate.getMonth() + delta, 1);
+  renderCalendar();
 }
 
-function togglePriority(idx) {
-  ws.priorities[idx].done = !ws.priorities[idx].done;
-  queueSave();
-  renderToday();
+function renderCalendar() {
+  const year = calViewDate.getFullYear();
+  const month = calViewDate.getMonth();
+  document.getElementById('calMonthTitle').textContent = calViewDate.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const todayKey = formatDateKey(new Date());
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  let html = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => `<div class="cal-head">${d}</div>`).join('');
+  for (let i = 0; i < firstDay; i++) html += `<div></div>`;
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const d = new Date(year, month, day);
+    const key = formatDateKey(d);
+    const dName = dayNames[d.getDay()];
+    const rec = ws.dailyOverrides[key] || { holiday: false, logs: {} };
+    const daySlots = ws.timetable.filter(s => s.profileId === ws.activeProfileId && s.day === dName);
+    const deliveredCount = Object.values(rec.logs || {}).filter(v => v === 'delivered' || v === 'proxy').length;
+    const extras = (ws.extraWork || []).filter(w => w.date === key && w.profileId === ws.activeProfileId);
+    const opps = ws.opportunities.filter(o => o.deadline === key);
+
+    html += `
+      <div class="cal-cell ${key === todayKey ? 'today-cell' : ''} ${rec.holiday ? 'holiday-cell' : ''}" onclick="jumpToDate('${key}')">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <strong style="font-size:13px;">${day}</strong>
+          ${rec.holiday ? `<span style="font-size:10px; color:var(--crimson); font-weight:700;">HOLIDAY</span>` : ''}
+        </div>
+        <div class="cal-dots">
+          ${deliveredCount > 0 ? `<span class="cal-tag b-emerald">${deliveredCount} Taught</span>` : (daySlots.length > 0 && !rec.holiday ? `<span class="cal-tag b-accent">${daySlots.length} Classes</span>` : '')}
+          ${extras.length > 0 ? `<span class="cal-tag b-amber">+${extras.length} Extra</span>` : ''}
+          ${opps.map(o => `<span class="cal-tag b-crimson">${escapeHtml(o.title)}</span>`).join('')}
+        </div>
+      </div>
+    `;
+  }
+  document.getElementById('calendarGrid').innerHTML = html;
 }
 
-function deletePriority(idx) {
-  ws.priorities.splice(idx, 1);
-  queueSave();
-  renderToday();
+function jumpToDate(dateKey) {
+  const target = new Date(dateKey + 'T00:00:00');
+  const today = new Date(formatDateKey(new Date()) + 'T00:00:00');
+  selectedDateOffset = Math.round((target - today) / 86400000);
+  navigate('today');
 }
 
-function updateScratchpad(val) {
-  ws.scratchpad = val;
-  queueSave();
-}
-
-/* 2. TEACHING RENDER */
+/* ==========================================================================
+   3. VISUAL WEEKLY TIMETABLE & SUBJECTS VIEW
+   ========================================================================== */
 function renderTeaching() {
+  // Visual Mon-Sat Matrix
+  const matrix = document.getElementById('weeklyMatrix');
+  matrix.innerHTML = DAYS.map(day => {
+    const slots = ws.timetable
+      .filter(s => s.profileId === ws.activeProfileId && s.day === day)
+      .sort((a, b) => a.time.localeCompare(b.time));
+    return `
+      <div class="day-col">
+        <div class="day-col-head">
+          <span>${day}</span>
+          <button class="btn btn-ghost btn-sm" style="padding:3px 8px; font-size:11.5px;" onclick="openDrawer('slot', '${day}')">+ Add</button>
+        </div>
+        ${slots.length === 0
+          ? `<div style="font-size:12px; color:var(--muted); text-align:center; padding:24px 6px;">No classes</div>`
+          : slots.map(s => {
+              const subj = ws.subjects.find(x => x.id === s.subjectId) || { title: 'Subject', color: '#1E3A8A' };
+              return `
+                <div class="mini-slot" style="border-left-color:${subj.color || 'var(--accent)'}">
+                  <button onclick="deleteSlot('${s.id}')" style="position:absolute; top:6px; right:7px; border:none; background:none; color:var(--crimson); cursor:pointer; font-size:14px;">&times;</button>
+                  <div style="font-size:11px; font-weight:700; color:var(--accent);">${s.period ? escapeHtml(s.period) + ' • ' : ''}${escapeHtml(s.time)}</div>
+                  <div style="font-weight:700; font-size:13px; margin:2px 0; padding-right:14px;">${escapeHtml(subj.title)}</div>
+                  <div style="font-size:11px; color:var(--muted);">${escapeHtml(s.batch || '')} ${s.room ? '• ' + escapeHtml(s.room) : ''}</div>
+                </div>
+              `;
+            }).join('')
+        }
+      </div>
+    `;
+  }).join('');
+
+  // Subjects Grid
   const activeSubs = ws.subjects.filter(s => s.profileId === ws.activeProfileId);
   const sGrid = document.getElementById('subjectsGrid');
-
   if (activeSubs.length === 0) {
-    sGrid.innerHTML = `<p style="color:var(--muted); font-size:13.5px; grid-column:1/-1;">No subjects added yet for this term. Click <strong>+ Add Subject</strong> to create one.</p>`;
+    sGrid.innerHTML = `<p style="color:var(--muted); font-size:13.5px; grid-column:1/-1;">No subjects added yet. Click <strong>+ Add Subject</strong> above to create your first paper.</p>`;
   } else {
     sGrid.innerHTML = activeSubs.map(s => {
       const units = s.units || [];
       const doneCount = units.filter(u => u.done).length;
       const pct = units.length ? Math.round((doneCount / units.length) * 100) : 0;
       return `
-        <div class="card" style="border-top:4px solid ${s.color || 'var(--accent)'}; padding:15px;">
+        <div class="card" style="border-top:4px solid ${s.color || 'var(--accent)'}; padding:16px;">
           <div style="display:flex; justify-content:space-between; align-items:start;">
             <span class="badge b-accent">${escapeHtml(s.paperType)}</span>
             <button class="btn btn-sm btn-danger" style="padding:2px 7px;" onclick="deleteSubject('${s.id}')">&times;</button>
           </div>
-          <h4 style="margin:8px 0 2px; font-size:15px;">${escapeHtml(s.title)}</h4>
+          <h4 style="margin:8px 0 2px; font-size:15.5px;">${escapeHtml(s.title)}</h4>
           <p style="font-size:12px; color:var(--muted);">${escapeHtml(s.code || '')} &bull; ${escapeHtml(s.program || '')}</p>
-
           <div style="margin-top:12px;">
             <div style="display:flex; justify-content:space-between; font-size:12px; font-weight:600;">
-              <span>Syllabus Progress</span>
+              <span>Syllabus Completion</span>
               <span>${pct}% (${doneCount}/${units.length})</span>
             </div>
             <div class="prog-track"><div class="prog-fill" style="width:${pct}%; background:${s.color || 'var(--accent)'}"></div></div>
           </div>
-
-          <div style="margin-top:10px; max-height:110px; overflow-y:auto;">
+          <div style="margin-top:10px; max-height:120px; overflow-y:auto;">
             ${units.map((u, i) => `
               <label style="display:flex; align-items:center; gap:6px; font-size:12px; padding:3px 0; cursor:pointer; color:${u.done?'var(--muted)':'var(--ink)'}">
                 <input type="checkbox" style="width:auto;" ${u.done?'checked':''} onchange="toggleSyllabusUnit('${s.id}', ${i})">
@@ -1123,57 +1368,235 @@ function renderTeaching() {
       `;
     }).join('');
   }
-
-  const dayFilter = document.getElementById('dayFilterSelect').value;
-  const slots = ws.timetable
-    .filter(s => s.profileId === ws.activeProfileId && (dayFilter === 'ALL' || s.day === dayFilter));
-
-  const ttList = document.getElementById('masterTimetableList');
-  if (slots.length === 0) {
-    ttList.innerHTML = `<p style="color:var(--muted); font-size:13.5px;">No timetable slots configured yet.</p>`;
-  } else {
-    ttList.innerHTML = slots.map(s => {
-      const subj = ws.subjects.find(x => x.id === s.subjectId) || { title: 'Subject', color: '#1E3A8A' };
-      return `
-        <div class="slot-card" style="border-left-color:${subj.color || 'var(--accent)'}">
-          <div>
-            <span class="badge b-neutral">${s.day}</span>
-            <strong style="margin-left:8px; font-size:14px;">${escapeHtml(s.time)} — ${escapeHtml(subj.title)}</strong>
-            <div style="font-size:12px; color:var(--muted); margin-top:3px;">${escapeHtml(s.sessionType)} &bull; Batch: ${escapeHtml(s.batch || '-')} &bull; Room: ${escapeHtml(s.room || '-')}</div>
-          </div>
-          <button class="btn btn-sm btn-danger" onclick="deleteSlot('${s.id}')">Remove</button>
-        </div>
-      `;
-    }).join('');
-  }
 }
 
 function toggleSyllabusUnit(subjId, unitIdx) {
   const s = ws.subjects.find(x => x.id === subjId);
   if (s && s.units[unitIdx]) {
     s.units[unitIdx].done = !s.units[unitIdx].done;
-    queueSave();
-    renderTeaching();
+    queueSave(); renderTeaching(); renderAnalytics();
   }
 }
-
 function deleteSubject(id) {
   if (!confirm('Delete this subject?')) return;
   ws.subjects = ws.subjects.filter(s => s.id !== id);
-  queueSave();
-  renderTeaching();
+  queueSave(); renderTeaching();
 }
-
 function deleteSlot(id) {
   ws.timetable = ws.timetable.filter(s => s.id !== id);
-  queueSave();
-  renderTeaching();
-  renderToday();
+  queueSave(); renderTeaching(); renderToday();
 }
 
-/* 3. RESEARCH KANBAN */
-const STAGES = ['Drafting', 'Peer Review', 'Revisions', 'Published'];
+/* ==========================================================================
+   4. TEACHING LOGBOOK & WEEKLY/MONTHLY PDF GENERATOR
+   ========================================================================== */
+function toggleLogPeriodInputs() {
+  const p = document.getElementById('logPeriodType').value;
+  document.getElementById('logMonthPicker').classList.toggle('hidden', p !== 'month');
+  document.getElementById('logWeekPicker').classList.toggle('hidden', p !== 'week');
+  renderLogbook();
+}
 
+function getFilteredLogEntries() {
+  const pType = document.getElementById('logPeriodType').value;
+  const monthVal = document.getElementById('logMonthPicker').value; // YYYY-MM
+  const weekAnchor = document.getElementById('logWeekPicker').value; // YYYY-MM-DD
+  const subjFilter = document.getElementById('logSubjectFilter').value;
+
+  let weekStart = null, weekEnd = null;
+  if (pType === 'week' && weekAnchor) {
+    const d = new Date(weekAnchor + 'T00:00:00');
+    const day = d.getDay();
+    const diffToMon = (day === 0 ? -6 : 1 - day);
+    weekStart = new Date(d); weekStart.setDate(d.getDate() + diffToMon);
+    weekEnd = new Date(weekStart); weekEnd.setDate(weekStart.getDate() + 6);
+  }
+
+  const inRange = (dateStr) => {
+    if (pType === 'all') return true;
+    if (pType === 'month') return dateStr.startsWith(monthVal);
+    if (pType === 'week' && weekStart && weekEnd) {
+      const dt = new Date(dateStr + 'T00:00:00');
+      return dt >= weekStart && dt <= weekEnd;
+    }
+    return true;
+  };
+
+  const rows = [];
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+  // 1. Delivered & Proxy Lectures
+  Object.entries(ws.dailyOverrides || {}).forEach(([dateKey, rec]) => {
+    if (rec.holiday || !inRange(dateKey)) return;
+    const dObj = new Date(dateKey + 'T00:00:00');
+    const dName = dayNames[dObj.getDay()];
+
+    Object.entries(rec.logs || {}).forEach(([slotId, status]) => {
+      if (status !== 'delivered' && status !== 'proxy') return;
+      const slot = ws.timetable.find(s => s.id === slotId);
+      if (!slot || slot.profileId !== ws.activeProfileId) return;
+      if (subjFilter !== 'ALL' && slot.subjectId !== subjFilter) return;
+
+      const subj = ws.subjects.find(x => x.id === slot.subjectId) || { title: 'Subject', code: '' };
+      rows.push({
+        date: dateKey,
+        day: dName,
+        kind: status === 'proxy' ? 'Proxy Lecture' : 'Regular Lecture',
+        title: `${subj.title} ${subj.code ? '(' + subj.code + ')' : ''}`,
+        meta: `${slot.period ? slot.period + ' • ' : ''}${slot.time} | ${slot.batch || '-'}`,
+        details: (rec.topics && rec.topics[slotId]) ? rec.topics[slotId] : 'Topic not specified',
+        metric: (rec.attendance && rec.attendance[slotId]) ? `${rec.attendance[slotId]} students` : '1 session'
+      });
+    });
+  });
+
+  // 2. Extra Academic Work
+  if (subjFilter === 'ALL' || subjFilter === 'EXTRA_ONLY') {
+    (ws.extraWork || []).forEach(w => {
+      if (w.profileId !== ws.activeProfileId || !inRange(w.date)) return;
+      const dObj = new Date(w.date + 'T00:00:00');
+      rows.push({
+        date: w.date,
+        day: dayNames[dObj.getDay()],
+        kind: w.category || 'Extra Work',
+        title: w.title,
+        meta: 'College / Academic Duty',
+        details: w.notes || '-',
+        metric: `${w.hours || 1} hr(s)`
+      });
+    });
+  }
+
+  rows.sort((a, b) => b.date.localeCompare(a.date));
+  return { rows, pType, monthVal, weekStart, weekEnd };
+}
+
+function renderLogbook() {
+  const sel = document.getElementById('logSubjectFilter');
+  const prevVal = sel.value || 'ALL';
+  const activeSubs = ws.subjects.filter(s => s.profileId === ws.activeProfileId);
+  sel.innerHTML = `<option value="ALL">All Lectures &amp; Extra Work</option><option value="EXTRA_ONLY">Extra Work Only</option>` +
+    activeSubs.map(s => `<option value="${s.id}">${escapeHtml(s.title)}</option>`).join('');
+  sel.value = Array.from(sel.options).some(o => o.value === prevVal) ? prevVal : 'ALL';
+
+  const { rows } = getFilteredLogEntries();
+  const tbody = document.getElementById('logbookTableBody');
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:24px;">No logged lectures or extra activities for the selected period.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td><strong>${r.date}</strong><div style="font-size:11.5px; color:var(--muted);">${r.day}</div></td>
+      <td><span class="badge ${r.kind==='Regular Lecture'?'b-emerald':r.kind==='Proxy Lecture'?'b-amber':'b-accent'}">${escapeHtml(r.kind)}</span></td>
+      <td><strong>${escapeHtml(r.title)}</strong></td>
+      <td style="font-size:12px; color:var(--muted);">${escapeHtml(r.meta)}</td>
+      <td>${escapeHtml(r.details)}</td>
+      <td style="font-weight:600;">${escapeHtml(r.metric)}</td>
+    </tr>
+  `).join('');
+}
+
+function downloadLogbookPdf() {
+  const { rows, pType, monthVal, weekStart, weekEnd } = getFilteredLogEntries();
+  const profile = ws.profiles.find(p => p.id === ws.activeProfileId) || { name: 'Current Term', institution: session.user.institution };
+
+  let periodLabel = 'All Recorded Term Activities';
+  if (pType === 'month') periodLabel = 'Month: ' + monthVal;
+  if (pType === 'week' && weekStart && weekEnd) {
+    periodLabel = `Week: ${formatDateKey(weekStart)} to ${formatDateKey(weekEnd)}`;
+  }
+
+  const regularCount = rows.filter(r => r.kind === 'Regular Lecture').length;
+  const proxyCount = rows.filter(r => r.kind === 'Proxy Lecture').length;
+  const extraCount = rows.filter(r => r.kind !== 'Regular Lecture' && r.kind !== 'Proxy Lecture').length;
+
+  const printHtml = `
+    <div style="font-family: 'Inter', Arial, sans-serif; color:#0F172A; padding:24px;">
+      <div style="border-bottom:2px solid #1E3A8A; padding-bottom:12px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:flex-end;">
+        <div>
+          <div style="font-size:11px; text-transform:uppercase; letter-spacing:1px; color:#1E3A8A; font-weight:700;">Athena Academic Logbook</div>
+          <h1 style="font-size:20px; margin:4px 0;">${escapeHtml(session.user.name)}</h1>
+          <div style="font-size:12px; color:#475569;">${escapeHtml(profile.institution || session.user.institution || '')} &bull; ${escapeHtml(profile.name)}</div>
+        </div>
+        <div style="text-align:right; font-size:12px;">
+          <div style="font-weight:700; color:#1E3A8A;">${periodLabel}</div>
+          <div style="color:#64748B;">Generated: ${formatDateKey(new Date())}</div>
+        </div>
+      </div>
+
+      <div style="display:flex; gap:12px; margin-bottom:18px;">
+        <div style="flex:1; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:10px;">
+          <div style="font-size:11px; color:#64748B;">Regular Lectures</div>
+          <div style="font-size:18px; font-weight:700; color:#1E3A8A;">${regularCount}</div>
+        </div>
+        <div style="flex:1; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:10px;">
+          <div style="font-size:11px; color:#64748B;">Proxy Sessions</div>
+          <div style="font-size:18px; font-weight:700; color:#D97706;">${proxyCount}</div>
+        </div>
+        <div style="flex:1; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:10px;">
+          <div style="font-size:11px; color:#64748B;">Extra College Duties</div>
+          <div style="font-size:18px; font-weight:700; color:#059669;">${extraCount}</div>
+        </div>
+      </div>
+
+      <table style="width:100%; border-collapse:collapse; font-size:11px;">
+        <thead>
+          <tr style="background:#1E3A8A; color:#FFFFFF;">
+            <th style="padding:8px; text-align:left; border:1px solid #1E3A8A;">Date</th>
+            <th style="padding:8px; text-align:left; border:1px solid #1E3A8A;">Category</th>
+            <th style="padding:8px; text-align:left; border:1px solid #1E3A8A;">Subject / Activity</th>
+            <th style="padding:8px; text-align:left; border:1px solid #1E3A8A;">Time / Batch</th>
+            <th style="padding:8px; text-align:left; border:1px solid #1E3A8A;">Topic Covered / Remarks</th>
+            <th style="padding:8px; text-align:left; border:1px solid #1E3A8A;">Metric</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.length === 0
+            ? `<tr><td colspan="6" style="padding:14px; text-align:center; border:1px solid #CBD5E1;">No entries recorded for this period.</td></tr>`
+            : rows.slice().reverse().map(r => `
+              <tr>
+                <td style="padding:7px; border:1px solid #CBD5E1;">${r.date}<br><span style="color:#64748B;font-size:10px;">${r.day}</span></td>
+                <td style="padding:7px; border:1px solid #CBD5E1;">${escapeHtml(r.kind)}</td>
+                <td style="padding:7px; border:1px solid #CBD5E1; font-weight:600;">${escapeHtml(r.title)}</td>
+                <td style="padding:7px; border:1px solid #CBD5E1;">${escapeHtml(r.meta)}</td>
+                <td style="padding:7px; border:1px solid #CBD5E1;">${escapeHtml(r.details)}</td>
+                <td style="padding:7px; border:1px solid #CBD5E1;">${escapeHtml(r.metric)}</td>
+              </tr>
+            `).join('')
+          }
+        </tbody>
+      </table>
+
+      <div style="margin-top:36px; display:flex; justify-content:space-between; font-size:11.5px; color:#334155;">
+        <div>__________________________<br>Signature of Faculty</div>
+        <div style="text-align:right;">__________________________<br>Head of Department / Principal</div>
+      </div>
+    </div>
+  `;
+
+  const el = document.getElementById('pdfPrintContainer');
+  el.innerHTML = printHtml;
+  el.style.display = 'block';
+
+  const opt = {
+    margin: 0.35,
+    filename: `Athena_Activity_Report_${pType}_${formatDateKey(new Date())}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(el).save().then(() => {
+    el.style.display = 'none';
+    showToast('PDF Activity Report downloaded');
+  });
+}
+
+/* ==========================================================================
+   5. RESEARCH KANBAN & 6. OPPORTUNITIES
+   ========================================================================== */
 function renderResearch() {
   const board = document.getElementById('kanbanBoard');
   board.innerHTML = STAGES.map(stage => {
@@ -1208,26 +1631,15 @@ function renderResearch() {
 let draggedResId = null;
 function dragResearch(e, id) { draggedResId = id; }
 function dropResearch(e, targetStage) {
-  e.preventDefault();
-  e.currentTarget.classList.remove('drag-over');
+  e.preventDefault(); e.currentTarget.classList.remove('drag-over');
   if (draggedResId) moveResearch(draggedResId, targetStage);
 }
 function moveResearch(id, stage) {
   const item = ws.research.find(r => r.id === id);
-  if (item) {
-    item.stage = stage;
-    queueSave();
-    renderResearch();
-    renderAnalytics();
-  }
+  if (item) { item.stage = stage; queueSave(); renderResearch(); renderAnalytics(); }
 }
-function deleteResearch(id) {
-  ws.research = ws.research.filter(r => r.id !== id);
-  queueSave();
-  renderResearch();
-}
+function deleteResearch(id) { ws.research = ws.research.filter(r => r.id !== id); queueSave(); renderResearch(); }
 
-/* 4. OPPORTUNITIES & FELLOWSHIPS */
 function setOppFilter(f) {
   oppFilter = f;
   document.querySelectorAll('[data-opp-filter]').forEach(b => {
@@ -1258,7 +1670,7 @@ function renderOpportunities() {
         </div>
         <h4 style="font-size:15.5px; margin-bottom:3px;">${escapeHtml(o.title)}</h4>
         <p style="font-size:12.5px; color:var(--muted); margin-bottom:8px;">${escapeHtml(o.institution)}</p>
-        ${o.deadline ? `<div style="font-size:12px; font-weight:600; color:var(--amber); margin-bottom:6px;">Deadline / Date: ${o.deadline}</div>` : ''}
+        ${o.deadline ? `<div style="font-size:12px; font-weight:600; color:var(--amber); margin-bottom:6px;">Date / Deadline: ${o.deadline}</div>` : ''}
         ${o.notes ? `<p style="font-size:12px; color:var(--muted); background:var(--surface-2); padding:8px; border-radius:8px; margin-bottom:10px;">${escapeHtml(o.notes)}</p>` : ''}
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding-top:10px; border-top:1px solid var(--border);">
@@ -1274,21 +1686,14 @@ function renderOpportunities() {
   `).join('');
 }
 
-function updateOppStatus(id, st) {
-  const o = ws.opportunities.find(x => x.id === id);
-  if (o) { o.status = st; queueSave(); renderAnalytics(); }
-}
-function deleteOpp(id) {
-  ws.opportunities = ws.opportunities.filter(x => x.id !== id);
-  queueSave();
-  renderOpportunities();
-  renderAnalytics();
-}
+function updateOppStatus(id, st) { const o = ws.opportunities.find(x => x.id === id); if (o) { o.status = st; queueSave(); renderAnalytics(); } }
+function deleteOpp(id) { ws.opportunities = ws.opportunities.filter(x => x.id !== id); queueSave(); renderOpportunities(); renderAnalytics(); }
 
-/* 5. ANALYTICS */
+/* ==========================================================================
+   7. ANALYTICS & SETTINGS
+   ========================================================================== */
 function renderAnalytics() {
-  let deliveredCount = 0;
-  let proxyCount = 0;
+  let deliveredCount = 0, proxyCount = 0;
   const bySessionType = {};
 
   Object.values(ws.dailyOverrides || {}).forEach(dayRec => {
@@ -1304,16 +1709,16 @@ function renderAnalytics() {
     });
   });
 
+  const extraHours = (ws.extraWork || []).reduce((acc, w) => acc + (parseFloat(w.hours) || 0), 0);
   const allUnits = ws.subjects.flatMap(s => s.units || []);
   const avgSyllabus = allUnits.length ? Math.round((allUnits.filter(u => u.done).length / allUnits.length) * 100) : 0;
   const publishedCount = ws.research.filter(r => r.stage === 'Published').length;
-  const activeOpps = ws.opportunities.filter(o => o.status !== 'Archived').length;
 
   document.getElementById('analyticsKpis').innerHTML = `
     <div class="card"><div style="font-size:12px;color:var(--muted);">Lectures Delivered</div><div class="serif" style="font-size:28px;font-weight:700;color:var(--accent);">${deliveredCount}</div><div style="font-size:11.5px;color:var(--emerald);">+${proxyCount} proxy sessions</div></div>
-    <div class="card"><div style="font-size:12px;color:var(--muted);">Avg Syllabus Completion</div><div class="serif" style="font-size:28px;font-weight:700;">${avgSyllabus}%</div><div style="font-size:11.5px;color:var(--muted);">Across ${ws.subjects.length} subjects</div></div>
-    <div class="card"><div style="font-size:12px;color:var(--muted);">Research Pipeline</div><div class="serif" style="font-size:28px;font-weight:700;color:var(--emerald);">${publishedCount} / ${ws.research.length}</div><div style="font-size:11.5px;color:var(--muted);">Published vs. total</div></div>
-    <div class="card"><div style="font-size:12px;color:var(--muted);">Active Opportunities</div><div class="serif" style="font-size:28px;font-weight:700;color:var(--amber);">${activeOpps}</div><div style="font-size:11.5px;color:var(--muted);">Calls &amp; fellowships</div></div>
+    <div class="card"><div style="font-size:12px;color:var(--muted);">Extra Academic Hours</div><div class="serif" style="font-size:28px;font-weight:700;color:var(--amber);">${extraHours}h</div><div style="font-size:11.5px;color:var(--muted);">${(ws.extraWork||[]).length} logged duties</div></div>
+    <div class="card"><div style="font-size:12px;color:var(--muted);">Avg Syllabus Progress</div><div class="serif" style="font-size:28px;font-weight:700;">${avgSyllabus}%</div><div style="font-size:11.5px;color:var(--muted);">Across ${ws.subjects.length} subjects</div></div>
+    <div class="card"><div style="font-size:12px;color:var(--muted);">Research Published</div><div class="serif" style="font-size:28px;font-weight:700;color:var(--emerald);">${publishedCount} / ${ws.research.length}</div><div style="font-size:11.5px;color:var(--muted);">Manuscripts &amp; papers</div></div>
   `;
 
   const maxType = Math.max(1, ...Object.values(bySessionType));
@@ -1333,8 +1738,9 @@ function renderAnalytics() {
   const walkins = ws.opportunities.filter(o => o.mode === 'Walk-in').length;
   document.getElementById('chartOpportunities').innerHTML = `
     <div style="display:flex; flex-direction:column; gap:10px; font-size:13.5px;">
-      <div style="display:flex; justify-content:space-between;"><span>Free Applications</span><span class="badge b-emerald">${freeOpps}</span></div>
-      <div style="display:flex; justify-content:space-between;"><span>Paid Applications</span><span class="badge b-amber">${paidOpps}</span></div>
+      <div style="display:flex; justify-content:space-between;"><span>Extra Academic Duties Logged</span><span class="badge b-amber">${(ws.extraWork||[]).length} (${extraHours}h)</span></div>
+      <div style="display:flex; justify-content:space-between;"><span>Free Applications Tracked</span><span class="badge b-emerald">${freeOpps}</span></div>
+      <div style="display:flex; justify-content:space-between;"><span>Paid Applications Tracked</span><span class="badge b-amber">${paidOpps}</span></div>
       <div style="display:flex; justify-content:space-between;"><span>Walk-in Interviews</span><span class="badge b-crimson">${walkins}</span></div>
     </div>
   `;
@@ -1342,14 +1748,13 @@ function renderAnalytics() {
 
 function copyAppraisalReport() {
   const text = `ATHENA ACADEMIC SUMMARY — ${session.user.name} (${session.user.institution})\n` +
-    `Active Subjects: ${ws.subjects.length}\n` +
+    `Active Subjects: ${ws.subjects.length} | Extra Academic Duties: ${(ws.extraWork||[]).length}\n` +
     `Research Manuscripts: ${ws.research.length} (${ws.research.filter(r=>r.stage==='Published').length} Published)\n` +
     `Opportunities Tracked: ${ws.opportunities.length}`;
   navigator.clipboard.writeText(text);
   showToast('Semester appraisal summary copied to clipboard');
 }
 
-/* 6. SETTINGS & VAULT */
 function renderVault() {
   const list = document.getElementById('vaultLinksList');
   list.innerHTML = (ws.vaultLinks || []).map((v, i) => `
@@ -1362,23 +1767,13 @@ function renderVault() {
     </div>
   `).join('') || `<p style="color:var(--muted); font-size:13px;">No saved links yet.</p>`;
 }
-
-function deleteVault(i) {
-  ws.vaultLinks.splice(i, 1);
-  queueSave();
-  renderVault();
-}
+function deleteVault(i) { ws.vaultLinks.splice(i, 1); queueSave(); renderVault(); }
 
 async function saveProfileSettings() {
   const name = document.getElementById('setProfileName').value.trim();
   const institution = document.getElementById('setProfileInst').value.trim();
   const newPassword = document.getElementById('setNewPass').value;
-  const res = await apiCall({
-    action: 'updateProfile',
-    userId: session.user.userId,
-    token: session.token,
-    name, institution, newPassword
-  });
+  const res = await apiCall({ action: 'updateProfile', userId: session.user.userId, token: session.token, name, institution, newPassword });
   if (res.success) {
     session.user = res.user;
     localStorage.setItem('athena_session', JSON.stringify(session));
@@ -1386,9 +1781,7 @@ async function saveProfileSettings() {
     document.getElementById('sideUserInst').textContent = res.user.institution;
     document.getElementById('setNewPass').value = '';
     showToast('Account details updated');
-  } else {
-    showToast(res.error || 'Update failed');
-  }
+  } else showToast(res.error || 'Update failed');
 }
 
 function exportJsonBackup() {
@@ -1399,12 +1792,77 @@ function exportJsonBackup() {
   a.click();
 }
 
-/* SLIDE-OVER DRAWERS */
-function openDrawer(type) {
+/* ==========================================================================
+   SLIDE-OVER DRAWERS (MULTI-DAY TIMETABLE BUILDER & EXTRA WORK)
+   ========================================================================== */
+function openDrawer(type, preselectDay) {
   const titleEl = document.getElementById('drawerTitle');
   const bodyEl = document.getElementById('drawerBody');
 
-  if (type === 'profile') {
+  if (type === 'slot') {
+    titleEl.textContent = 'Add Weekly Timetable Class';
+    const subs = ws.subjects.filter(s => s.profileId === ws.activeProfileId);
+    if (subs.length === 0) {
+      bodyEl.innerHTML = `<p style="color:var(--muted); margin-bottom:14px;">Create at least one subject first so you can assign it to your weekly timetable.</p><button class="btn btn-primary" onclick="openDrawer('subject')">+ Add Subject Now</button>`;
+    } else {
+      const defaultDays = preselectDay ? [preselectDay] : ['Monday'];
+      bodyEl.innerHTML = `
+        <div class="field"><label>1. Select Subject</label>
+          <select id="dSlotSubj">${subs.map(s => `<option value="${s.id}">${escapeHtml(s.title)} ${s.code ? '('+escapeHtml(s.code)+')' : ''}</option>`).join('')}</select>
+        </div>
+
+        <div class="field">
+          <label>2. Tap All Days This Class Runs On (Multi-Select)</label>
+          <div class="day-pill-grid" id="dayPillSelector">
+            ${DAYS.map(d => `<div class="day-pill ${defaultDays.includes(d) ? 'selected' : ''}" data-day="${d}" onclick="this.classList.toggle('selected')">${d.slice(0,3)}</div>`).join('')}
+          </div>
+        </div>
+
+        <div class="field">
+          <label>3. Time Slot (Pick Start/End or Tap Quick Preset)</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+            <input type="time" id="dSlotStart" value="09:00" onchange="syncTimeRangeText()">
+            <input type="time" id="dSlotEnd" value="09:50" onchange="syncTimeRangeText()">
+          </div>
+          <input type="text" id="dSlotTime" value="09:00 AM - 09:50 AM" style="margin-top:7px;" placeholder="Formatted time label">
+          <div class="chip-row">
+            <span class="preset-chip" onclick="applyTimePreset('08:00','08:50','08:00 AM - 08:50 AM')">08:00–08:50</span>
+            <span class="preset-chip" onclick="applyTimePreset('09:00','09:50','09:00 AM - 09:50 AM')">09:00–09:50</span>
+            <span class="preset-chip" onclick="applyTimePreset('10:00','10:50','10:00 AM - 10:50 AM')">10:00–10:50</span>
+            <span class="preset-chip" onclick="applyTimePreset('11:00','11:50','11:00 AM - 11:50 AM')">11:00–11:50</span>
+            <span class="preset-chip" onclick="applyTimePreset('12:00','12:50','12:00 PM - 12:50 PM')">12:00–12:50</span>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div class="field"><label>Period Label (Optional)</label><input id="dSlotPeriod" placeholder="e.g., Lecture 1"></div>
+          <div class="field"><label>Session Type</label>
+            <select id="dSlotType">${(ws.settings.sessionTypes || ['Theory Lecture']).map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}</select>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div class="field"><label>Batch / Class</label><input id="dSlotBatch" placeholder="e.g., FY B.A. Div A"></div>
+          <div class="field"><label>Room / Lab</label><input id="dSlotRoom" placeholder="e.g., Room 204"></div>
+        </div>
+
+        <button class="btn btn-primary" style="width:100%;" onclick="saveNewSlot()">Save to Weekly Timetable</button>
+      `;
+    }
+  } else if (type === 'extraWork') {
+    titleEl.textContent = 'Log Extra College Work / Activity';
+    const dateKey = formatDateKey(getTargetDate());
+    bodyEl.innerHTML = `
+      <div class="field"><label>Date</label><input type="date" id="dExtraDate" value="${dateKey}"></div>
+      <div class="field"><label>Activity Category</label>
+        <select id="dExtraCat">${(ws.settings.extraCategories || ['Committee / Event Duty']).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>Activity / Duty Title</label><input id="dExtraTitle" placeholder="e.g., NAAC Criterion 3 Committee Meeting / Exam Invigilation"></div>
+      <div class="field"><label>Duration (Hours)</label><input type="number" step="0.5" min="0.5" id="dExtraHours" value="1"></div>
+      <div class="field"><label>Remarks / Details</label><textarea id="dExtraNotes" rows="3" placeholder="Optional details for your logbook or appraisal report..."></textarea></div>
+      <button class="btn btn-primary" style="width:100%;" onclick="saveNewExtraWork()">Save Activity to Logbook</button>
+    `;
+  } else if (type === 'profile') {
     titleEl.textContent = 'Add College / Term Profile';
     bodyEl.innerHTML = `
       <div class="field"><label>Term / Profile Label</label><input id="dProfName" placeholder="e.g., New College — Even Sem 2027"></div>
@@ -1412,16 +1870,11 @@ function openDrawer(type) {
       <button class="btn btn-primary" style="width:100%;" onclick="saveNewProfile()">Create &amp; Switch Profile</button>
     `;
   } else if (type === 'types') {
-    titleEl.textContent = 'Custom Paper & Session Types';
+    titleEl.textContent = 'Custom Paper, Session & Activity Types';
     bodyEl.innerHTML = `
-      <div class="field">
-        <label>Paper / Course Types (comma-separated)</label>
-        <input id="dPaperTypes" value="${escapeHtml((ws.settings.paperTypes || []).join(', '))}">
-      </div>
-      <div class="field">
-        <label>Session / Delivery Types (comma-separated)</label>
-        <input id="dSessionTypes" value="${escapeHtml((ws.settings.sessionTypes || []).join(', '))}">
-      </div>
+      <div class="field"><label>Paper / Course Types (comma-separated)</label><input id="dPaperTypes" value="${escapeHtml((ws.settings.paperTypes || []).join(', '))}"></div>
+      <div class="field"><label>Session / Delivery Types (comma-separated)</label><input id="dSessionTypes" value="${escapeHtml((ws.settings.sessionTypes || []).join(', '))}"></div>
+      <div class="field"><label>Extra College Activity Categories (comma-separated)</label><input id="dExtraCats" value="${escapeHtml((ws.settings.extraCategories || []).join(', '))}"></div>
       <button class="btn btn-primary" style="width:100%;" onclick="saveCustomTypes()">Save Custom Types</button>
     `;
   } else if (type === 'subject') {
@@ -1434,33 +1887,9 @@ function openDrawer(type) {
         <select id="dSubjType">${(ws.settings.paperTypes || ['Core']).map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}</select>
       </div>
       <div class="field"><label>Badge Color</label><input type="color" id="dSubjColor" value="#1E3A8A" style="height:40px;"></div>
-      <div class="field"><label>Syllabus Units (one unit/topic per line)</label><textarea id="dSubjUnits" rows="5" placeholder="Unit 1: Introduction to Educational Psychology&#10;Unit 2: Learning Theories&#10;Unit 3: Intelligence &amp; Creativity"></textarea></div>
+      <div class="field"><label>Syllabus Units / Topics (one per line — auto-suggests when logging lectures)</label><textarea id="dSubjUnits" rows="5" placeholder="Unit 1: Introduction to Educational Psychology&#10;Unit 2: Learning Theories&#10;Unit 3: Intelligence &amp; Creativity"></textarea></div>
       <button class="btn btn-primary" style="width:100%;" onclick="saveNewSubject()">Save Subject</button>
     `;
-  } else if (type === 'slot') {
-    titleEl.textContent = 'Add Weekly Timetable Slot';
-    const subs = ws.subjects.filter(s => s.profileId === ws.activeProfileId);
-    if (subs.length === 0) {
-      bodyEl.innerHTML = `<p style="color:var(--muted); margin-bottom:14px;">Please add at least one subject first before creating timetable slots.</p><button class="btn btn-primary" onclick="openDrawer('subject')">+ Add Subject Now</button>`;
-    } else {
-      bodyEl.innerHTML = `
-        <div class="field"><label>Subject</label>
-          <select id="dSlotSubj">${subs.map(s => `<option value="${s.id}">${escapeHtml(s.title)}</option>`).join('')}</select>
-        </div>
-        <div class="field"><label>Day of Week</label>
-          <select id="dSlotDay">
-            <option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option><option>Saturday</option>
-          </select>
-        </div>
-        <div class="field"><label>Time Slot</label><input id="dSlotTime" placeholder="e.g., 10:00 AM - 10:50 AM"></div>
-        <div class="field"><label>Session Type</label>
-          <select id="dSlotType">${(ws.settings.sessionTypes || ['Theory Lecture']).map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('')}</select>
-        </div>
-        <div class="field"><label>Batch / Division</label><input id="dSlotBatch" placeholder="e.g., Div A"></div>
-        <div class="field"><label>Room / Hall</label><input id="dSlotRoom" placeholder="e.g., Room 204"></div>
-        <button class="btn btn-primary" style="width:100%;" onclick="saveNewSlot()">Add to Timetable</button>
-      `;
-    }
   } else if (type === 'research') {
     titleEl.textContent = 'Add Research / Seminar';
     bodyEl.innerHTML = `
@@ -1504,6 +1933,69 @@ function closeDrawer() {
   document.getElementById('drawerPanel').classList.remove('open');
 }
 
+function format12h(t24) {
+  if (!t24) return '';
+  let [h, m] = t24.split(':').map(Number);
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')} ${ampm}`;
+}
+
+function syncTimeRangeText() {
+  const s = document.getElementById('dSlotStart').value;
+  const e = document.getElementById('dSlotEnd').value;
+  if (s && e) document.getElementById('dSlotTime').value = `${format12h(s)} - ${format12h(e)}`;
+}
+
+function applyTimePreset(s, e, label) {
+  document.getElementById('dSlotStart').value = s;
+  document.getElementById('dSlotEnd').value = e;
+  document.getElementById('dSlotTime').value = label;
+}
+
+function saveNewSlot() {
+  const selectedDays = Array.from(document.querySelectorAll('#dayPillSelector .day-pill.selected')).map(el => el.dataset.day);
+  if (selectedDays.length === 0) {
+    showToast('Select at least one day of the week');
+    return;
+  }
+  const subjId = document.getElementById('dSlotSubj').value;
+  const time = document.getElementById('dSlotTime').value.trim() || '09:00 AM';
+  const period = document.getElementById('dSlotPeriod').value.trim();
+  const sessionType = document.getElementById('dSlotType').value;
+  const batch = document.getElementById('dSlotBatch').value.trim();
+  const room = document.getElementById('dSlotRoom').value.trim();
+
+  selectedDays.forEach((day, i) => {
+    ws.timetable.push({
+      id: 'slt_' + Date.now().toString(36) + '_' + i,
+      profileId: ws.activeProfileId,
+      subjectId: subjId,
+      day, time, period, sessionType, batch, room
+    });
+  });
+
+  queueSave(); closeDrawer(); renderAll();
+  showToast(`Added class to ${selectedDays.length} day(s)`);
+}
+
+function saveNewExtraWork() {
+  const title = document.getElementById('dExtraTitle').value.trim();
+  if (!title) return;
+  ws.extraWork = ws.extraWork || [];
+  ws.extraWork.push({
+    id: 'ext_' + Date.now().toString(36),
+    profileId: ws.activeProfileId,
+    date: document.getElementById('dExtraDate').value,
+    category: document.getElementById('dExtraCat').value,
+    title,
+    hours: document.getElementById('dExtraHours').value || '1',
+    notes: document.getElementById('dExtraNotes').value.trim()
+  });
+  queueSave(); closeDrawer(); renderAll();
+  showToast('Extra activity logged');
+}
+
 function saveNewProfile() {
   const name = document.getElementById('dProfName').value.trim();
   const inst = document.getElementById('dProfInst').value.trim();
@@ -1517,6 +2009,7 @@ function saveNewProfile() {
 function saveCustomTypes() {
   ws.settings.paperTypes = document.getElementById('dPaperTypes').value.split(',').map(s => s.trim()).filter(Boolean);
   ws.settings.sessionTypes = document.getElementById('dSessionTypes').value.split(',').map(s => s.trim()).filter(Boolean);
+  ws.settings.extraCategories = document.getElementById('dExtraCats').value.split(',').map(s => s.trim()).filter(Boolean);
   queueSave(); closeDrawer(); showToast('Custom types updated');
 }
 
@@ -1533,20 +2026,6 @@ function saveNewSubject() {
     paperType: document.getElementById('dSubjType').value,
     color: document.getElementById('dSubjColor').value,
     units
-  });
-  queueSave(); closeDrawer(); renderAll();
-}
-
-function saveNewSlot() {
-  ws.timetable.push({
-    id: 'slt_' + Date.now().toString(36),
-    profileId: ws.activeProfileId,
-    subjectId: document.getElementById('dSlotSubj').value,
-    day: document.getElementById('dSlotDay').value,
-    time: document.getElementById('dSlotTime').value.trim() || '09:00 AM',
-    sessionType: document.getElementById('dSlotType').value,
-    batch: document.getElementById('dSlotBatch').value.trim(),
-    room: document.getElementById('dSlotRoom').value.trim()
   });
   queueSave(); closeDrawer(); renderAll();
 }
