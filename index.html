@@ -787,6 +787,13 @@
               </select>
               <input type="month" id="logMonthPicker" onchange="renderLogbook()" style="width:auto; padding:6px 10px; font-size:13px;">
               <input type="date" id="logWeekPicker" onchange="renderLogbook()" class="hidden" style="width:auto; padding:6px 10px; font-size:13px;" title="Pick any date in the target week">
+              <select id="logActivityGroupFilter" onchange="renderLogbook()" style="width:auto; padding:7px 10px; font-size:13px;">
+                <option value="ALL">All (Lectures &amp; Extra)</option>
+                <option value="LECTURES_ONLY">Scheduled Lectures Only</option>
+                <option value="EXTRA_ALL">All Extra Activities</option>
+                <option value="REELS">Social Media / Reels</option>
+                <option value="EXAM">Exam / Evaluation Duties</option>
+              </select>
               <select id="logSubjectFilter" onchange="renderLogbook()" style="width:auto; padding:7px 10px; font-size:13px;"></select>
               <button class="btn btn-primary btn-sm" onclick="downloadLogbookPdf()">&#128196; Download PDF Report</button>
             </div>
@@ -1265,10 +1272,13 @@ function renderToday() {
               <div style="font-weight:700; font-size:15.5px; margin-top:3px;">${escapeHtml(subj.title)} <span style="color:var(--muted); font-weight:500;">${subj.code ? '(' + escapeHtml(subj.code) + ')' : ''}</span></div>
               <div style="font-size:12.5px; color:var(--muted);">Batch: ${escapeHtml(s.batch || 'N/A')} &bull; Room: ${escapeHtml(s.room || 'N/A')}</div>
             </div>
-            <div class="status-pills">
-              <button class="st-btn ${status==='delivered'?'active-delivered':''}" onclick="setSlotStatus('${dateKey}','${s.id}','delivered')">&#10003; Delivered</button>
-              <button class="st-btn ${status==='proxy'?'active-proxy':''}" onclick="setSlotStatus('${dateKey}','${s.id}','proxy')">Proxy</button>
-              <button class="st-btn ${status==='canceled'?'active-canceled':''}" onclick="setSlotStatus('${dateKey}','${s.id}','canceled')">Canceled</button>
+            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+              <div class="status-pills">
+                <button class="st-btn ${status==='delivered'?'active-delivered':''}" onclick="setSlotStatus('${dateKey}','${s.id}','delivered')">&#10003; Delivered</button>
+                <button class="st-btn ${status==='proxy'?'active-proxy':''}" onclick="setSlotStatus('${dateKey}','${s.id}','proxy')">Proxy</button>
+                <button class="st-btn ${status==='canceled'?'active-canceled':''}" onclick="setSlotStatus('${dateKey}','${s.id}','canceled')">Canceled</button>
+              </div>
+              <button class="btn btn-sm btn-ghost" onclick="openEditLectureDrawer('${dateKey}','${s.id}','${subj.id}')">Edit Log</button>
             </div>
           </div>
 
@@ -1304,7 +1314,10 @@ function renderToday() {
           <strong style="margin-left:6px; font-size:13.5px;">${escapeHtml(w.title)}</strong>
           <div style="font-size:12px; color:var(--muted); margin-top:2px;">Duration: ${escapeHtml(w.hours || '1')} hr(s) ${w.notes ? '• ' + escapeHtml(w.notes) : ''}</div>
         </div>
-        <button class="btn btn-sm btn-danger" onclick="deleteExtraWork('${w.id}')">&times;</button>
+        <div style="display:flex; gap:5px; align-items:center;">
+          <button class="btn btn-sm btn-ghost" onclick="editExtraWork('${w.id}')">Edit</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteExtraWork('${w.id}')">&times;</button>
+        </div>
       </div>
     `).join('');
   }
@@ -1569,11 +1582,27 @@ function toggleLogPeriodInputs() {
   renderLogbook();
 }
 
+function matchesActivityGroup(groupVal, row) {
+  if (!groupVal || groupVal === 'ALL') return true;
+  if (groupVal === 'LECTURES_ONLY') return row.entryType === 'lecture';
+  if (groupVal === 'EXTRA_ALL') return row.entryType === 'extra';
+  const catLower = (row.kind + ' ' + row.title + ' ' + row.details).toLowerCase();
+  if (groupVal === 'REELS') {
+    return catLower.includes('reel') || catLower.includes('social') || catLower.includes('video') || catLower.includes('instagram');
+  }
+  if (groupVal === 'EXAM') {
+    return catLower.includes('exam') || catLower.includes('evaluation') || catLower.includes('invigilation') || catLower.includes('assessment');
+  }
+  return true;
+}
+
 function getFilteredLogEntries() {
   const pType = document.getElementById('logPeriodType').value;
   const monthVal = document.getElementById('logMonthPicker').value;
   const weekAnchor = document.getElementById('logWeekPicker').value;
   const subjFilter = document.getElementById('logSubjectFilter').value;
+  const actGroupEl = document.getElementById('logActivityGroupFilter');
+  const actGroup = actGroupEl ? actGroupEl.value : 'ALL';
 
   let weekStart = null, weekEnd = null;
   if (pType === 'week' && weekAnchor) {
@@ -1594,7 +1623,7 @@ function getFilteredLogEntries() {
     return true;
   };
 
-  const rows = [];
+  const allInPeriod = [];
   const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
   Object.entries(ws.dailyOverrides || {}).forEach(([dateKey, rec]) => {
@@ -1606,10 +1635,13 @@ function getFilteredLogEntries() {
       if (status !== 'delivered' && status !== 'proxy') return;
       const slot = ws.timetable.find(s => s.id === slotId);
       if (!slot || slot.profileId !== ws.activeProfileId) return;
-      if (subjFilter !== 'ALL' && slot.subjectId !== subjFilter) return;
 
-      const subj = ws.subjects.find(x => x.id === slot.subjectId) || { title: 'Subject', code: '' };
-      rows.push({
+      const subj = ws.subjects.find(x => x.id === slot.subjectId) || { id: '', title: 'Subject', code: '' };
+      allInPeriod.push({
+        entryType: 'lecture',
+        dateKey: dateKey,
+        slotId: slot.id,
+        subjectId: slot.subjectId,
         date: dateKey,
         day: dName,
         kind: status === 'proxy' ? 'Proxy Lecture' : 'Regular Lecture',
@@ -1621,24 +1653,39 @@ function getFilteredLogEntries() {
     });
   });
 
-  if (subjFilter === 'ALL' || subjFilter === 'EXTRA_ONLY') {
-    (ws.extraWork || []).forEach(w => {
-      if (w.profileId !== ws.activeProfileId || !inRange(w.date)) return;
-      const dObj = new Date(w.date + 'T00:00:00');
-      rows.push({
-        date: w.date,
-        day: dayNames[dObj.getDay()],
-        kind: w.category || 'Extra Work',
-        title: w.title,
-        meta: 'College / Academic Duty',
-        details: w.notes || '-',
-        metric: `${w.hours || 1} hr(s)`
-      });
+  (ws.extraWork || []).forEach(w => {
+    if (w.profileId !== ws.activeProfileId || !inRange(w.date)) return;
+    const dObj = new Date(w.date + 'T00:00:00');
+    allInPeriod.push({
+      entryType: 'extra',
+      extraId: w.id,
+      date: w.date,
+      day: dayNames[dObj.getDay()],
+      kind: w.category || 'Extra Work',
+      title: w.title,
+      meta: 'College / Academic Duty',
+      details: w.notes || '-',
+      metric: `${w.hours || 1} hr(s)`
     });
-  }
+  });
+
+  const breakdown = {
+    total: allInPeriod.length,
+    lectures: allInPeriod.filter(r => r.entryType === 'lecture').length,
+    extraTotal: allInPeriod.filter(r => r.entryType === 'extra').length,
+    reels: allInPeriod.filter(r => matchesActivityGroup('REELS', r)).length,
+    exams: allInPeriod.filter(r => matchesActivityGroup('EXAM', r)).length
+  };
+
+  const rows = allInPeriod.filter(r => {
+    if (!matchesActivityGroup(actGroup, r)) return false;
+    if (subjFilter === 'EXTRA_ONLY') return r.entryType === 'extra';
+    if (subjFilter !== 'ALL') return r.entryType === 'lecture' && r.subjectId === subjFilter;
+    return true;
+  });
 
   rows.sort((a, b) => b.date.localeCompare(a.date));
-  return { rows, pType, monthVal, weekStart, weekEnd };
+  return { rows, breakdown, actGroup, pType, monthVal, weekStart, weekEnd };
 }
 
 function renderLogbook() {
@@ -1649,27 +1696,50 @@ function renderLogbook() {
     activeSubs.map(s => `<option value="${s.id}">${escapeHtml(s.title)}</option>`).join('');
   sel.value = Array.from(sel.options).some(o => o.value === prevVal) ? prevVal : 'ALL';
 
-  const { rows } = getFilteredLogEntries();
+  const { rows, breakdown } = getFilteredLogEntries();
+  const bannerCard = document.querySelector('#view-logbook .card-banner');
+  let summaryStrip = document.getElementById('logbookBreakdownStrip');
+  if (!summaryStrip && bannerCard) {
+    summaryStrip = document.createElement('div');
+    summaryStrip.id = 'logbookBreakdownStrip';
+    summaryStrip.style.cssText = 'display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);';
+    bannerCard.appendChild(summaryStrip);
+  }
+  if (summaryStrip) {
+    summaryStrip.innerHTML = `
+      <span class="badge b-accent">Scheduled Lectures: ${breakdown.lectures}</span>
+      <span class="badge b-amber">Extra Activities: ${breakdown.extraTotal}</span>
+      <span class="badge b-emerald">Social Media / Reels: ${breakdown.reels}</span>
+      <span class="badge b-crimson">Exam / Evaluation: ${breakdown.exams}</span>
+      <span class="badge b-neutral">Showing: ${rows.length} / ${breakdown.total}</span>
+    `;
+  }
+
   const tbody = document.getElementById('logbookTableBody');
   if (rows.length === 0) {
     tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--muted); padding:24px;">No logged lectures or extra activities for the selected period.</td></tr>`;
     return;
   }
 
-  tbody.innerHTML = rows.map(r => `
-    <tr>
-      <td><strong>${r.date}</strong><div style="font-size:11.5px; color:var(--muted);">${r.day}</div></td>
-      <td><span class="badge ${r.kind==='Regular Lecture'?'b-emerald':r.kind==='Proxy Lecture'?'b-amber':'b-accent'}">${escapeHtml(r.kind)}</span></td>
-      <td><strong>${escapeHtml(r.title)}</strong></td>
-      <td style="font-size:12px; color:var(--muted);">${escapeHtml(r.meta)}</td>
-      <td>${escapeHtml(r.details)}</td>
-      <td style="font-weight:600;">${escapeHtml(r.metric)}</td>
-    </tr>
-  `).join('');
+  tbody.innerHTML = rows.map(r => {
+    const editBtnHtml = r.entryType === 'extra'
+      ? `<button class="btn btn-sm btn-ghost" style="margin-left:6px; padding:3px 8px; font-size:11px;" onclick="editExtraWork('${r.extraId}')">Edit</button>`
+      : `<button class="btn btn-sm btn-ghost" style="margin-left:6px; padding:3px 8px; font-size:11px;" onclick="openEditLectureDrawer('${r.dateKey}','${r.slotId}','${r.subjectId}')">Edit</button>`;
+    return `
+      <tr>
+        <td><strong>${r.date}</strong><div style="font-size:11.5px; color:var(--muted);">${r.day}</div></td>
+        <td><span class="badge ${r.kind==='Regular Lecture'?'b-emerald':r.kind==='Proxy Lecture'?'b-amber':'b-accent'}">${escapeHtml(r.kind)}</span></td>
+        <td><strong>${escapeHtml(r.title)}</strong></td>
+        <td style="font-size:12px; color:var(--muted);">${escapeHtml(r.meta)}</td>
+        <td>${escapeHtml(r.details)}</td>
+        <td style="font-weight:600; white-space:nowrap;">${escapeHtml(r.metric)}${editBtnHtml}</td>
+      </tr>
+    `;
+  }).join('');
 }
 
 function downloadLogbookPdf() {
-  const { rows, pType, monthVal, weekStart, weekEnd } = getFilteredLogEntries();
+  const { rows, breakdown, pType, monthVal, weekStart, weekEnd } = getFilteredLogEntries();
   const profile = ws.profiles.find(p => p.id === ws.activeProfileId) || { name: 'Current Term', institution: session.user.institution };
 
   let periodLabel = 'All Recorded Term Activities';
@@ -1678,9 +1748,9 @@ function downloadLogbookPdf() {
     periodLabel = `Week: ${formatDateKey(weekStart)} to ${formatDateKey(weekEnd)}`;
   }
 
-  const regularCount = rows.filter(r => r.kind === 'Regular Lecture').length;
-  const proxyCount = rows.filter(r => r.kind === 'Proxy Lecture').length;
-  const extraCount = rows.filter(r => r.kind !== 'Regular Lecture' && r.kind !== 'Proxy Lecture').length;
+  const regularCount = breakdown.lectures;
+  const proxyCount = breakdown.extraTotal;
+  const extraCount = breakdown.reels + breakdown.exams;
 
   const printHtml = `
     <div style="font-family: 'Inter', Arial, sans-serif; color:#0F172A; padding:24px;">
@@ -1702,18 +1772,22 @@ function downloadLogbookPdf() {
         </div>
       </div>
 
-      <div style="display:flex; gap:12px; margin-bottom:18px;">
-        <div style="flex:1; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:10px;">
-          <div style="font-size:11px; color:#64748B;">Regular Lectures</div>
-          <div style="font-size:18px; font-weight:700; color:#1E3A8A;">${regularCount}</div>
+      <div style="display:flex; gap:10px; margin-bottom:18px;">
+        <div style="flex:1; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:9px;">
+          <div style="font-size:10.5px; color:#64748B;">Scheduled Lectures</div>
+          <div style="font-size:17px; font-weight:700; color:#1E3A8A;">${breakdown.lectures}</div>
         </div>
-        <div style="flex:1; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:10px;">
-          <div style="font-size:11px; color:#64748B;">Proxy Sessions</div>
-          <div style="font-size:18px; font-weight:700; color:#D97706;">${proxyCount}</div>
+        <div style="flex:1; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:9px;">
+          <div style="font-size:10.5px; color:#64748B;">Extra Activities</div>
+          <div style="font-size:17px; font-weight:700; color:#D97706;">${breakdown.extraTotal}</div>
         </div>
-        <div style="flex:1; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:10px;">
-          <div style="font-size:11px; color:#64748B;">Extra College Duties</div>
-          <div style="font-size:18px; font-weight:700; color:#059669;">${extraCount}</div>
+        <div style="flex:1; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:9px;">
+          <div style="font-size:10.5px; color:#64748B;">Social Media / Reels</div>
+          <div style="font-size:17px; font-weight:700; color:#059669;">${breakdown.reels}</div>
+        </div>
+        <div style="flex:1; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:9px;">
+          <div style="font-size:10.5px; color:#64748B;">Exam / Evaluation</div>
+          <div style="font-size:17px; font-weight:700; color:#DC2626;">${breakdown.exams}</div>
         </div>
       </div>
 
@@ -2185,6 +2259,71 @@ function saveNewSlot() {
   showToast(`Added class to ${selectedDays.length} day(s)`);
 }
 
+let editingExtraId = null;
+
+function editExtraWork(id) {
+  const item = (ws.extraWork || []).find(w => w.id === id);
+  if (!item) return;
+  editingExtraId = id;
+  openDrawer('extraWork');
+  document.getElementById('drawerTitle').textContent = 'Edit Extra College Work / Activity';
+  document.getElementById('dExtraDate').value = item.date || formatDateKey(getTargetDate());
+  const catSel = document.getElementById('dExtraCat');
+  const exists = Array.from(catSel.options).some(o => o.value === item.category);
+  if (exists) {
+    catSel.value = item.category;
+  } else {
+    catSel.value = '__CUSTOM__';
+    document.getElementById('dExtraCustomCatWrap').classList.remove('hidden');
+    document.getElementById('dExtraCustomCat').value = item.category;
+  }
+  document.getElementById('dExtraTitle').value = item.title || '';
+  document.getElementById('dExtraHours').value = item.hours || '1';
+  document.getElementById('dExtraNotes').value = item.notes || '';
+}
+
+function openEditLectureDrawer(dateKey, slotId, subjId) {
+  const rec = ensureDayRec(dateKey);
+  const slot = ws.timetable.find(s => s.id === slotId) || { time: '', batch: '' };
+  const subj = ws.subjects.find(s => s.id === subjId) || { title: 'Lecture' };
+  const curStatus = rec.logs[slotId] || 'delivered';
+  const curTopic = rec.topics[slotId] || '';
+  const curAtt = rec.attendance[slotId] || '';
+
+  document.getElementById('drawerTitle').textContent = 'Edit Lecture Log Entry';
+  document.getElementById('drawerBody').innerHTML = `
+    <div style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">
+      <strong>${escapeHtml(subj.title)}</strong> &bull; ${escapeHtml(dateKey)} ${slot.time ? '&bull; ' + escapeHtml(slot.time) : ''}
+    </div>
+    <div class="field"><label>Lecture Status</label>
+      <select id="dEditLecStatus">
+        <option value="delivered" ${curStatus==='delivered'?'selected':''}>Delivered</option>
+        <option value="proxy" ${curStatus==='proxy'?'selected':''}>Proxy</option>
+        <option value="canceled" ${curStatus==='canceled'?'selected':''}>Canceled</option>
+        <option value="" ${curStatus===''?'selected':''}>Unmarked</option>
+      </select>
+    </div>
+    <div class="field"><label>Topic Covered</label>
+      <input type="text" id="dEditLecTopic" value="${escapeHtml(curTopic)}" placeholder="Topic taught in this lecture">
+    </div>
+    <div class="field"><label>Student Attendance Count</label>
+      <input type="number" min="0" id="dEditLecAtt" value="${escapeHtml(curAtt)}" placeholder="e.g., 45">
+    </div>
+    <button class="btn btn-primary" style="width:100%;" onclick="saveEditedLecture('${dateKey}','${slotId}','${subjId}')">Update Lecture Entry</button>
+  `;
+  document.getElementById('drawerBackdrop').classList.add('open');
+  document.getElementById('drawerPanel').classList.add('open');
+}
+
+function saveEditedLecture(dateKey, slotId, subjId) {
+  const rec = ensureDayRec(dateKey);
+  rec.logs[slotId] = document.getElementById('dEditLecStatus').value;
+  rec.topics[slotId] = document.getElementById('dEditLecTopic').value.trim();
+  rec.attendance[slotId] = document.getElementById('dEditLecAtt').value.trim();
+  queueSave(); closeDrawer(); renderAll();
+  showToast('Lecture entry updated');
+}
+
 function saveNewExtraWork() {
   const title = document.getElementById('dExtraTitle').value.trim();
   if (!title) { showToast('Enter an activity title'); return; }
@@ -2199,17 +2338,33 @@ function saveNewExtraWork() {
     }
   }
   ws.extraWork = ws.extraWork || [];
-  ws.extraWork.push({
-    id: 'ext_' + Date.now().toString(36),
-    profileId: ws.activeProfileId,
-    date: document.getElementById('dExtraDate').value,
-    category: category,
-    title,
-    hours: document.getElementById('dExtraHours').value || '1',
-    notes: document.getElementById('dExtraNotes').value.trim()
-  });
+  if (editingExtraId) {
+    const idx = ws.extraWork.findIndex(w => w.id === editingExtraId);
+    if (idx !== -1) {
+      ws.extraWork[idx] = {
+        ...ws.extraWork[idx],
+        date: document.getElementById('dExtraDate').value,
+        category: category,
+        title,
+        hours: document.getElementById('dExtraHours').value || '1',
+        notes: document.getElementById('dExtraNotes').value.trim()
+      };
+    }
+    editingExtraId = null;
+    showToast('Activity entry updated');
+  } else {
+    ws.extraWork.push({
+      id: 'ext_' + Date.now().toString(36),
+      profileId: ws.activeProfileId,
+      date: document.getElementById('dExtraDate').value,
+      category: category,
+      title,
+      hours: document.getElementById('dExtraHours').value || '1',
+      notes: document.getElementById('dExtraNotes').value.trim()
+    });
+    showToast('Extra activity saved to logbook');
+  }
   queueSave(); closeDrawer(); renderAll();
-  showToast('Extra activity saved to logbook');
 }
 
 function saveNewProfile() {
