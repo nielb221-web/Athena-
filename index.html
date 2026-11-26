@@ -1686,9 +1686,12 @@ function downloadLogbookPdf() {
     <div style="font-family: 'Inter', Arial, sans-serif; color:#0F172A; padding:24px;">
       <div style="border-bottom:2px solid #1E3A8A; padding-bottom:12px; margin-bottom:16px; display:flex; justify-content:space-between; align-items:flex-end;">
         <div>
-          <div style="margin-bottom:6px;">
-            <div style="font-family: 'Cinzel', Georgia, serif; font-size:20px; font-weight:800; letter-spacing:3.2px; text-transform:uppercase; color:#1E3A8A; line-height:1.1;">ATHENA</div>
-            <div style="display:inline-block; font-family: 'Inter', Arial, sans-serif; font-size:9px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase; color:#475569; margin-top:3px; padding-top:2px; border-top:1px solid #CBD5E1;">Academic Workspace</div>
+          <div style="display:flex; align-items:center; gap:11px; margin-bottom:8px;">
+            <img id="pdfLogoImg" src="${LOGO_SRC}" width="38" height="38" style="width:38px; height:38px; border-radius:9px; display:block; flex-shrink:0;">
+            <div>
+              <div style="font-family: 'Cinzel', Georgia, serif; font-size:21px; font-weight:800; letter-spacing:3px; text-transform:uppercase; color:#1E3A8A; line-height:1.05;">ATHENA</div>
+              <div style="display:inline-block; font-family: 'Inter', Arial, sans-serif; font-size:8.5px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#475569; margin-top:3px; padding-top:2px; border-top:1px solid #CBD5E1;">Academic Workspace</div>
+            </div>
           </div>
           <h1 style="font-size:20px; margin:4px 0;">${escapeHtml(session.user.name)}</h1>
           <div style="font-size:12px; color:#475569;">${escapeHtml(profile.institution || session.user.institution || '')} &bull; ${escapeHtml(profile.name)}</div>
@@ -1757,14 +1760,35 @@ function downloadLogbookPdf() {
     margin: 0.35,
     filename: `ATHENA_Activity_Report_${pType}_${formatDateKey(new Date())}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2 },
+    html2canvas: { scale: 2, useCORS: true, allowTaint: true },
     jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
   };
 
-  html2pdf().set(opt).from(el).save().then(() => {
-    el.style.display = 'none';
-    showToast('PDF Activity Report downloaded');
-  });
+  const runExport = () => {
+    html2pdf().set(opt).from(el).save().then(() => {
+      el.style.display = 'none';
+      showToast('PDF Activity Report downloaded');
+    });
+  };
+
+  const logoEl = el.querySelector('#pdfLogoImg');
+  if (logoEl) {
+    const tmpImg = new Image();
+    tmpImg.onload = function() {
+      try {
+        const cvs = document.createElement('canvas');
+        cvs.width = 160; cvs.height = 160;
+        const ctx = cvs.getContext('2d');
+        ctx.drawImage(tmpImg, 0, 0, 160, 160);
+        logoEl.src = cvs.toDataURL('image/png');
+      } catch (e) {}
+      runExport();
+    };
+    tmpImg.onerror = runExport;
+    tmpImg.src = LOGO_SRC;
+  } else {
+    runExport();
+  }
 }
 
 /* ==========================================================================
