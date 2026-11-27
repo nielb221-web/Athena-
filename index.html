@@ -2131,7 +2131,7 @@ function saveNewSemOrStudents() {
   let added = 0;
   bulkLines.forEach((line, i) => {
     // Parse "RollNo Name" or "RollNo	Name" or "RollNo, Name"
-    const match = line.match(/^([A-Za-z0-9-]+)[\s,	-]+(.+)$/);
+    const match = line.match(/^([A-Za-z0-9-]+)[\s,\t-]+(.+)$/);
     const roll = match ? match[1].trim() : String(added + 1);
     const name = match ? match[2].trim() : line.trim();
     if (name) {
@@ -2266,8 +2266,7 @@ function downloadStudentAttendanceCsv() {
   });
 
   const tag = scope === 'day' ? dateKey : scope === 'month' ? monthKey : 'Total_Term';
-  const blob = new Blob([lines.join('
-')], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `ATHENA_Attendance_${curSem.name.replace(/\s+/g, '_')}_${tag}.csv`;
