@@ -943,8 +943,9 @@
                 <div style="font-size:12px; color:var(--muted);" id="attRosterStats">Tap a student row to toggle Present / Absent</div>
               </div>
               <div style="display:flex; gap:6px; flex-wrap:wrap;">
-                <button class="btn btn-sm btn-ghost" style="color:var(--emerald);" onclick="markAllStudents('present')">&#10003; Mark All Present</button>
-                <button class="btn btn-sm btn-ghost" style="color:var(--crimson);" onclick="markAllStudents('absent')">&#10005; Mark All Absent</button>
+                <button class="btn btn-sm btn-ghost" style="color:var(--emerald);" onclick="markAllStudents('present')">&#10003; All Present</button>
+                <button class="btn btn-sm btn-ghost" style="color:var(--crimson);" onclick="markAllStudents('absent')">&#10005; All Absent</button>
+                <button class="btn btn-sm btn-ghost" onclick="clearAllStudentsAtt()" title="Reset all to blank">Reset</button>
               </div>
             </div>
 
@@ -961,9 +962,21 @@
                 <span class="card-title">Attendance Summary &amp; Export</span>
               </div>
               <div id="attSummaryBox" style="font-size:13.5px;"></div>
-              <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:14px;">
-                <button class="btn btn-primary btn-sm" style="flex:1;" onclick="downloadStudentAttendancePdf()">&#128196; PDF Attendance Sheet</button>
-                <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="downloadStudentAttendanceCsv()">&#128202; Export CSV / Excel</button>
+
+              <div style="margin-top:14px; padding-top:12px; border-top:1px solid var(--border);">
+                <label style="display:block; font-size:11.5px; font-weight:700; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.04em;">Download Attendance Log Range</label>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+                  <select id="attExportScope" onchange="document.getElementById('attExportMonth').classList.toggle('hidden', this.value !== 'month')" style="flex:1; min-width:140px; padding:7px 10px; font-size:13px; font-weight:600;">
+                    <option value="month">Month-Wise Log</option>
+                    <option value="term">Total Term Attendance</option>
+                    <option value="day">Single Date (Selected)</option>
+                  </select>
+                  <input type="month" id="attExportMonth" style="width:auto; padding:6px 10px; font-size:13px;">
+                </div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <button class="btn btn-primary btn-sm" style="flex:1;" onclick="downloadStudentAttendancePdf()">&#128196; Download PDF</button>
+                  <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="downloadStudentAttendanceCsv()">&#128202; Download CSV</button>
+                </div>
               </div>
             </div>
 
@@ -1169,6 +1182,7 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('logMonthPicker').value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
   document.getElementById('logWeekPicker').value = formatDateKey(now);
   const attDp = document.getElementById('attDatePicker'); if (attDp) attDp.value = formatDateKey(now);
+  const attEm = document.getElementById('attExportMonth'); if (attEm) attEm.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
   if (session && session.user && session.token) {
     bootWorkspace();
   }
@@ -2045,10 +2059,28 @@ function toggleStudentAtt(studentId) {
   ws.studentAttendance[sessionKey] = ws.studentAttendance[sessionKey] || {};
 
   const cur = ws.studentAttendance[sessionKey][studentId] || '';
-  // Tap cycle: Unmarked -> Present (P) -> Absent (A) -> Present (P)
-  ws.studentAttendance[sessionKey][studentId] = cur === 'P' ? 'A' : 'P';
+  // 3-state tap cycle: Unmarked ('') -> Present ('P') -> Absent ('A') -> Unmarked ('')
+  if (cur === '') {
+    ws.studentAttendance[sessionKey][studentId] = 'P';
+  } else if (cur === 'P') {
+    ws.studentAttendance[sessionKey][studentId] = 'A';
+  } else {
+    delete ws.studentAttendance[sessionKey][studentId];
+  }
   queueSave();
   renderStudentAttendance();
+}
+
+function clearAllStudentsAtt() {
+  const dateKey = document.getElementById('attDatePicker').value || formatDateKey(new Date());
+  const subjId = document.getElementById('attSubjectSelect').value || 'ALL_SUBJ';
+  const sessionKey = `${dateKey}__${activeAttSemId}__${subjId}`;
+  if (ws.studentAttendance && ws.studentAttendance[sessionKey]) {
+    delete ws.studentAttendance[sessionKey];
+  }
+  queueSave();
+  renderStudentAttendance();
+  showToast('Cleared attendance marks for this session');
 }
 
 function markAllStudents(status) {
@@ -2157,40 +2189,14 @@ function executeTermCarryForward() {
   showToast(`Carried forward ${movingStudents.length} students!`);
 }
 
-function downloadStudentAttendanceCsv() {
+function buildAttendanceReportDataset() {
   const curSem = ws.studentSemesters.find(s => s.id === activeAttSemId) || { name: 'Semester' };
-  const dateKey = document.getElementById('attDatePicker').value || formatDateKey(new Date());
-  const subjId = document.getElementById('attSubjectSelect').value || 'ALL_SUBJ';
-  const sessionKey = `${dateKey}__${activeAttSemId}__${subjId}`;
-  const sessionRecord = (ws.studentAttendance || {})[sessionKey] || {};
-
-  let semStudents = (ws.students || []).filter(st => st.semId === activeAttSemId)
-    .sort((a, b) => (parseInt(a.roll, 10) || 9999) - (parseInt(b.roll, 10) || 9999));
-
-  const lines = ['"Roll No","Student Name","Semester","Date","Status"'];
-  semStudents.forEach(st => {
-    const stCode = sessionRecord[st.id] === 'P' ? 'Present' : sessionRecord[st.id] === 'A' ? 'Absent' : 'Not Marked';
-    lines.push(`"${st.roll}","${st.name.replace(/"/g, '""')}","${curSem.name}","${dateKey}","${stCode}"`);
-  });
-
-  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `ATHENA_Attendance_${curSem.name.replace(/\s+/g, '_')}_${dateKey}.csv`;
-  a.click();
-  showToast('CSV Attendance Log downloaded');
-}
-
-function downloadStudentAttendancePdf() {
-  const curSem = ws.studentSemesters.find(s => s.id === activeAttSemId) || { name: 'Semester' };
-  const dateKey = document.getElementById('attDatePicker').value || formatDateKey(new Date());
-  const subjId = document.getElementById('attSubjectSelect').value || 'ALL_SUBJ';
+  const scope = (document.getElementById('attExportScope') && document.getElementById('attExportScope').value) || 'month';
+  const dateKey = (document.getElementById('attDatePicker') && document.getElementById('attDatePicker').value) || formatDateKey(new Date());
+  const monthKey = (document.getElementById('attExportMonth') && document.getElementById('attExportMonth').value) || dateKey.slice(0, 7);
+  const subjId = (document.getElementById('attSubjectSelect') && document.getElementById('attSubjectSelect').value) || 'ALL_SUBJ';
   const subObj = ws.subjects.find(x => x.id === subjId);
   const subTitle = subObj ? `${subObj.title} ${subObj.code ? '(' + subObj.code + ')' : ''}` : 'All Subjects / General';
-  const profile = ws.profiles.find(p => p.id === ws.activeProfileId) || { name: 'Current Term', institution: session.user.institution };
-
-  const sessionKey = `${dateKey}__${activeAttSemId}__${subjId}`;
-  const sessionRecord = (ws.studentAttendance || {})[sessionKey] || {};
 
   let semStudents = (ws.students || []).filter(st => st.semId === activeAttSemId);
   if (subjId !== 'ALL_SUBJ') {
@@ -2201,66 +2207,150 @@ function downloadStudentAttendancePdf() {
   }
   semStudents.sort((a, b) => (parseInt(a.roll, 10) || 9999) - (parseInt(b.roll, 10) || 9999));
 
-  // Also compute cumulative sessions count per student across this semester
-  const allSemSessions = Object.entries(ws.studentAttendance || {}).filter(([k]) => k.includes(`__${activeAttSemId}__`));
+  // Collect matching session entries for this semester & subject filter
+  const matchingSessions = Object.entries(ws.studentAttendance || {})
+    .filter(([k, rec]) => {
+      const [dPart, semPart, sPart] = k.split('__');
+      if (semPart !== activeAttSemId) return false;
+      if (subjId !== 'ALL_SUBJ' && sPart !== subjId) return false;
+      if (!rec || Object.keys(rec).length === 0) return false;
+      if (scope === 'day') return dPart === dateKey;
+      if (scope === 'month') return dPart.startsWith(monthKey);
+      return true; // 'term' = all recorded sessions in this semester
+    })
+    .sort((a, b) => a[0].localeCompare(b[0]));
 
-  let pTotal = 0, aTotal = 0;
-  const rowsHtml = semStudents.map(st => {
-    const code = sessionRecord[st.id] || '';
-    if (code === 'P') pTotal++;
-    if (code === 'A') aTotal++;
-    const statusLabel = code === 'P' ? '<span style="color:#059669;font-weight:700;">Present</span>' :
-                        code === 'A' ? '<span style="color:#DC2626;font-weight:700;">Absent</span>' :
-                        '<span style="color:#64748B;">-</span>';
+  const periodLabel = scope === 'day' ? `Date: ${dateKey}` :
+                      scope === 'month' ? `Month: ${monthKey}` :
+                      'Total Term Attendance';
 
-    let cumP = 0, cumTotal = 0;
-    allSemSessions.forEach(([, rec]) => {
-      if (rec[st.id] === 'P') { cumP++; cumTotal++; }
-      else if (rec[st.id] === 'A') { cumTotal++; }
+  const studentStats = semStudents.map(st => {
+    let pCount = 0, aCount = 0;
+    const perSession = {};
+    matchingSessions.forEach(([k, rec]) => {
+      const val = rec[st.id] || '';
+      perSession[k] = val;
+      if (val === 'P') pCount++;
+      else if (val === 'A') aCount++;
     });
-    const cumPct = cumTotal ? Math.round((cumP / cumTotal) * 100) + '%' : '-';
+    const held = pCount + aCount;
+    const pct = held > 0 ? Math.round((pCount / held) * 100) : 0;
+    return { student: st, pCount, aCount, held, pct, perSession };
+  });
+
+  return { curSem, scope, dateKey, monthKey, subjId, subTitle, periodLabel, matchingSessions, studentStats };
+}
+
+function downloadStudentAttendanceCsv() {
+  const { curSem, scope, dateKey, monthKey, periodLabel, matchingSessions, studentStats } = buildAttendanceReportDataset();
+
+  const dateHeaders = matchingSessions.map(([k]) => `"${k.split('__')[0]}"`);
+  const headerRow = ['"Roll No"', '"Student Name"', '"Semester"', ...dateHeaders, '"Present"', '"Absent"', '"Total Held"', '"Attendance %"'].join(',');
+
+  const lines = [headerRow];
+  studentStats.forEach(item => {
+    const dayCells = matchingSessions.map(([k]) => {
+      const v = item.perSession[k] || '';
+      return `"${v === 'P' ? 'P' : v === 'A' ? 'A' : '-'}"`;
+    });
+    lines.push([
+      `"${item.student.roll}"`,
+      `"${item.student.name.replace(/"/g, '""')}"`,
+      `"${curSem.name}"`,
+      ...dayCells,
+      `"${item.pCount}"`,
+      `"${item.aCount}"`,
+      `"${item.held}"`,
+      `"${item.pct}%"`
+    ].join(','));
+  });
+
+  const tag = scope === 'day' ? dateKey : scope === 'month' ? monthKey : 'Total_Term';
+  const blob = new Blob([lines.join('
+')], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ATHENA_Attendance_${curSem.name.replace(/\s+/g, '_')}_${tag}.csv`;
+  a.click();
+  showToast(`Downloaded ${periodLabel} CSV`);
+}
+
+function downloadStudentAttendancePdf() {
+  const { curSem, scope, dateKey, monthKey, subTitle, periodLabel, matchingSessions, studentStats } = buildAttendanceReportDataset();
+  const profile = ws.profiles.find(p => p.id === ws.activeProfileId) || { name: 'Current Term', institution: session.user.institution };
+
+  // Include date columns when <= 16 sessions so month-wise & term sheets show individual dates cleanly
+  const showDateCols = matchingSessions.length > 0 && matchingSessions.length <= 16;
+
+  const dateThs = showDateCols
+    ? matchingSessions.map(([k]) => {
+        const dStr = k.split('__')[0];
+        const shortD = dStr.slice(8, 10) + '/' + dStr.slice(5, 7);
+        return `<th style="padding:5px 3px; border:1px solid #1E3A8A; font-size:9px; text-align:center;">${shortD}</th>`;
+      }).join('')
+    : '';
+
+  const rowsHtml = studentStats.map(item => {
+    const dateTds = showDateCols
+      ? matchingSessions.map(([k]) => {
+          const v = item.perSession[k] || '';
+          const cellHtml = v === 'P' ? '<span style="color:#059669;font-weight:700;">P</span>' :
+                           v === 'A' ? '<span style="color:#DC2626;font-weight:700;">A</span>' :
+                           '<span style="color:#94A3B8;">-</span>';
+          return `<td style="padding:5px 3px; border:1px solid #CBD5E1; text-align:center; font-size:10px;">${cellHtml}</td>`;
+        }).join('')
+      : '';
+
+    const pctColor = item.held === 0 ? '#64748B' : item.pct >= 75 ? '#059669' : '#DC2626';
 
     return `
       <tr>
-        <td style="padding:6px 8px; border:1px solid #CBD5E1; font-weight:700; text-align:center;">${escapeHtml(st.roll)}</td>
-        <td style="padding:6px 8px; border:1px solid #CBD5E1;">${escapeHtml(st.name)}</td>
-        <td style="padding:6px 8px; border:1px solid #CBD5E1; text-align:center;">${statusLabel}</td>
-        <td style="padding:6px 8px; border:1px solid #CBD5E1; text-align:center;">${cumP} / ${cumTotal} (${cumPct})</td>
+        <td style="padding:6px 7px; border:1px solid #CBD5E1; font-weight:700; text-align:center;">${escapeHtml(item.student.roll)}</td>
+        <td style="padding:6px 8px; border:1px solid #CBD5E1;">${escapeHtml(item.student.name)}</td>
+        ${dateTds}
+        <td style="padding:6px 7px; border:1px solid #CBD5E1; text-align:center; color:#059669; font-weight:700;">${item.pCount}</td>
+        <td style="padding:6px 7px; border:1px solid #CBD5E1; text-align:center; color:#DC2626; font-weight:700;">${item.aCount}</td>
+        <td style="padding:6px 7px; border:1px solid #CBD5E1; text-align:center;">${item.held}</td>
+        <td style="padding:6px 7px; border:1px solid #CBD5E1; text-align:center; font-weight:700; color:${pctColor};">${item.held > 0 ? item.pct + '%' : '-'}</td>
       </tr>
     `;
   }).join('');
 
   const printHtml = `
-    <div style="font-family: 'Inter', Arial, sans-serif; color:#0F172A; padding:22px;">
+    <div style="font-family: 'Inter', Arial, sans-serif; color:#0F172A; padding:20px;">
       <div style="border-bottom:2px solid #1E3A8A; padding-bottom:12px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:flex-end;">
         <div>
           <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
             <img id="pdfAttLogoImg" src="${LOGO_SRC}" width="36" height="36" style="width:36px; height:36px; border-radius:8px; display:block;">
             <div>
               <div style="font-family: 'Cinzel', Georgia, serif; font-size:20px; font-weight:800; letter-spacing:3px; text-transform:uppercase; color:#1E3A8A; line-height:1.05;">ATHENA</div>
-              <div style="display:inline-block; font-size:8.5px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase; color:#475569; margin-top:2px; padding-top:2px; border-top:1px solid #CBD5E1;">Student Attendance Sheet</div>
+              <div style="display:inline-block; font-size:8.5px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase; color:#475569; margin-top:2px; padding-top:2px; border-top:1px solid #CBD5E1;">Student Attendance Register</div>
             </div>
           </div>
           <div style="font-size:15px; font-weight:700;">${escapeHtml(curSem.name)} &mdash; ${escapeHtml(subTitle)}</div>
           <div style="font-size:11.5px; color:#475569;">Faculty: ${escapeHtml(session.user.name)} &bull; ${escapeHtml(profile.institution || session.user.institution || '')}</div>
         </div>
         <div style="text-align:right; font-size:12px;">
-          <div style="font-weight:700; color:#1E3A8A;">Date: ${dateKey}</div>
-          <div style="color:#059669; font-weight:600;">Present: ${pTotal} | Absent: ${aTotal}</div>
+          <div style="font-weight:700; color:#1E3A8A;">${escapeHtml(periodLabel)}</div>
+          <div style="color:#475569;">Sessions Recorded: <strong>${matchingSessions.length}</strong></div>
+          <div style="color:#64748B; font-size:10.5px;">Generated: ${formatDateKey(new Date())}</div>
         </div>
       </div>
 
-      <table style="width:100%; border-collapse:collapse; font-size:11px;">
+      <table style="width:100%; border-collapse:collapse; font-size:10.5px;">
         <thead>
           <tr style="background:#1E3A8A; color:#FFFFFF;">
-            <th style="padding:7px; border:1px solid #1E3A8A; width:70px;">Roll No.</th>
-            <th style="padding:7px; border:1px solid #1E3A8A; text-align:left;">Student Name</th>
-            <th style="padding:7px; border:1px solid #1E3A8A; width:100px;">Status (${dateKey})</th>
-            <th style="padding:7px; border:1px solid #1E3A8A; width:130px;">Cumulative Attendance</th>
+            <th style="padding:7px 5px; border:1px solid #1E3A8A; width:56px;">Roll No.</th>
+            <th style="padding:7px 8px; border:1px solid #1E3A8A; text-align:left;">Student Name</th>
+            ${dateThs}
+            <th style="padding:7px 5px; border:1px solid #1E3A8A; width:54px;">Present</th>
+            <th style="padding:7px 5px; border:1px solid #1E3A8A; width:54px;">Absent</th>
+            <th style="padding:7px 5px; border:1px solid #1E3A8A; width:54px;">Total</th>
+            <th style="padding:7px 5px; border:1px solid #1E3A8A; width:64px;">%</th>
           </tr>
         </thead>
         <tbody>
-          ${rowsHtml || '<tr><td colspan="4" style="padding:12px; text-align:center; border:1px solid #CBD5E1;">No students in roster.</td></tr>'}
+          ${rowsHtml || '<tr><td colspan="6" style="padding:12px; text-align:center; border:1px solid #CBD5E1;">No students in roster.</td></tr>'}
         </tbody>
       </table>
 
@@ -2271,22 +2361,23 @@ function downloadStudentAttendancePdf() {
     </div>
   `;
 
+  const tag = scope === 'day' ? dateKey : scope === 'month' ? monthKey : 'Total_Term';
   const el = document.getElementById('pdfPrintContainer');
   el.innerHTML = printHtml;
   el.style.display = 'block';
 
   const opt = {
     margin: 0.35,
-    filename: `ATHENA_Attendance_${curSem.name.replace(/\s+/g, '_')}_${dateKey}.pdf`,
+    filename: `ATHENA_Attendance_${curSem.name.replace(/\s+/g, '_')}_${tag}.pdf`,
     image: { type: 'jpeg', quality: 0.98 },
     html2canvas: { scale: 2, useCORS: true, allowTaint: true },
-    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+    jsPDF: { unit: 'in', format: 'a4', orientation: showDateCols && matchingSessions.length > 8 ? 'landscape' : 'portrait' }
   };
 
   const runExport = () => {
     html2pdf().set(opt).from(el).save().then(() => {
       el.style.display = 'none';
-      showToast('Attendance PDF downloaded');
+      showToast(`Downloaded ${periodLabel} PDF`);
     });
   };
 
