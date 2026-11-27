@@ -353,6 +353,49 @@
   .b-crimson { background: var(--crimson-soft); color: var(--crimson); }
   .b-neutral { background: var(--surface-3); color: var(--muted); }
 
+  .faculty-att-bar {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .att-toggle-group {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .att-pill-btn {
+    padding: 6px 13px;
+    border-radius: 9px;
+    font-size: 12.5px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.18s var(--ease);
+  }
+  .att-pill-btn:hover { border-color: var(--accent); color: var(--ink); }
+  .att-pill-btn.active-present {
+    background: var(--emerald);
+    color: #fff;
+    border-color: var(--emerald);
+    box-shadow: 0 3px 10px var(--emerald-soft);
+  }
+  .att-pill-btn.active-absent {
+    background: var(--crimson);
+    color: #fff;
+    border-color: var(--crimson);
+    box-shadow: 0 3px 10px var(--crimson-soft);
+  }
+  .cal-cell.present-cell { border-bottom: 3px solid var(--emerald); }
+  .cal-cell.absent-cell { background: var(--crimson-soft); border-color: rgba(220, 38, 38, 0.35); }
+
   /* Rich Lecture Slot Card on Today View */
   .lecture-card {
     background: var(--surface);
@@ -674,6 +717,27 @@
               <button class="btn btn-ghost btn-sm" onclick="shiftDay(1)">Next &rarr;</button>
               <button class="btn btn-sm" id="holidayBtn" onclick="toggleHoliday()">&#127958;&#65039; Holiday: Off</button>
             </div>
+          </div>
+
+          <div class="faculty-att-bar">
+            <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+              <span style="font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--muted);">My Attendance:</span>
+              <div class="att-toggle-group">
+                <button type="button" class="att-pill-btn" id="btnMyPresent" onclick="setMyAttendance('present')">&#10003; Present</button>
+                <button type="button" class="att-pill-btn" id="btnMyAbsent" onclick="setMyAttendance('absent')">&#10005; Absent</button>
+              </div>
+              <select id="myAbsentReason" onchange="setMyAbsentReason(this.value)" class="hidden" style="width:auto; min-width:190px; padding:6px 10px; font-size:12.5px; font-weight:600;">
+                <option value="Casual Leave (CL)">Casual Leave (CL)</option>
+                <option value="Medical / Sick Leave">Medical / Sick Leave</option>
+                <option value="Duty Leave (DL) / Seminar">Duty Leave (DL) / Seminar</option>
+                <option value="Public / University Holiday">Public / University Holiday</option>
+                <option value="Vacation / Term Break">Vacation / Term Break</option>
+                <option value="Personal Leave">Personal Leave</option>
+                <option value="__CUSTOM__">+ Custom Reason...</option>
+              </select>
+              <input type="text" id="myAbsentCustomNote" placeholder="Specify reason..." onchange="setMyAbsentCustomNote(this.value)" class="hidden" style="width:auto; min-width:170px; padding:6px 10px; font-size:12.5px;">
+            </div>
+            <span id="myAttendanceStatusBadge" class="badge b-neutral">Not Marked</span>
           </div>
         </div>
 
@@ -1235,13 +1299,55 @@ function renderToday() {
     selectedDateOffset === -1 ? `Yesterday — ${dayName}` : `${dayName}, ${d.toLocaleDateString('en-IN', { day:'numeric', month:'short' })}`;
   document.getElementById('todaySubheading').textContent = d.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 
-  const dayRecord = ws.dailyOverrides[dateKey] || { holiday: false, logs: {}, topics: {}, attendance: {} };
+  const dayRecord = ws.dailyOverrides[dateKey] || { holiday: false, logs: {}, topics: {}, attendance: {}, myStatus: '', myReason: '', myCustomReason: '' };
   dayRecord.topics = dayRecord.topics || {};
   dayRecord.attendance = dayRecord.attendance || {};
+  if (dayRecord.holiday && !dayRecord.myStatus) {
+    dayRecord.myStatus = 'absent';
+    dayRecord.myReason = dayRecord.myReason || 'Public / University Holiday';
+  }
 
   const hBtn = document.getElementById('holidayBtn');
   hBtn.className = dayRecord.holiday ? 'btn btn-sm btn-danger' : 'btn btn-sm btn-ghost';
   hBtn.innerHTML = dayRecord.holiday ? '&#127958;&#65039; Holiday: ON' : '&#127958;&#65039; Holiday: Off';
+
+  // Sync Personal Faculty Attendance Controls
+  const pBtn = document.getElementById('btnMyPresent');
+  const aBtn = document.getElementById('btnMyAbsent');
+  const rSel = document.getElementById('myAbsentReason');
+  const cInp = document.getElementById('myAbsentCustomNote');
+  const stBadge = document.getElementById('myAttendanceStatusBadge');
+
+  pBtn.className = 'att-pill-btn' + (dayRecord.myStatus === 'present' ? ' active-present' : '');
+  aBtn.className = 'att-pill-btn' + (dayRecord.myStatus === 'absent' ? ' active-absent' : '');
+
+  if (dayRecord.myStatus === 'absent') {
+    rSel.classList.remove('hidden');
+    const savedReason = dayRecord.myReason || 'Casual Leave (CL)';
+    const hasOption = Array.from(rSel.options).some(o => o.value === savedReason);
+    if (hasOption) {
+      rSel.value = savedReason;
+      cInp.classList.toggle('hidden', savedReason !== '__CUSTOM__');
+      cInp.value = dayRecord.myCustomReason || '';
+    } else {
+      rSel.value = '__CUSTOM__';
+      cInp.classList.remove('hidden');
+      cInp.value = savedReason;
+    }
+    const displayReason = rSel.value === '__CUSTOM__' ? (cInp.value.trim() || 'Leave / Absent') : rSel.value;
+    stBadge.className = 'badge b-crimson';
+    stBadge.textContent = 'Absent • ' + displayReason;
+  } else if (dayRecord.myStatus === 'present') {
+    rSel.classList.add('hidden');
+    cInp.classList.add('hidden');
+    stBadge.className = 'badge b-emerald';
+    stBadge.textContent = 'Present on Duty';
+  } else {
+    rSel.classList.add('hidden');
+    cInp.classList.add('hidden');
+    stBadge.className = 'badge b-neutral';
+    stBadge.textContent = 'Attendance Not Marked';
+  }
 
   const slots = ws.timetable
     .filter(s => s.profileId === ws.activeProfileId && s.day === dayName)
@@ -1405,11 +1511,57 @@ function saveLectureAttendance(dateKey, slotId, count) {
   queueSave();
 }
 
+function setMyAttendance(status) {
+  const dateKey = formatDateKey(getTargetDate());
+  const rec = ensureDayRec(dateKey);
+  if (rec.myStatus === status) {
+    rec.myStatus = '';
+    rec.myReason = '';
+    rec.holiday = false;
+  } else {
+    rec.myStatus = status;
+    if (status === 'present') {
+      rec.holiday = false;
+    } else if (status === 'absent') {
+      rec.myReason = rec.myReason || 'Casual Leave (CL)';
+      if (rec.myReason === 'Public / University Holiday' || rec.myReason === 'Vacation / Term Break') {
+        rec.holiday = true;
+      }
+    }
+  }
+  queueSave(); renderToday(); renderCalendar(); renderAnalytics();
+}
+
+function setMyAbsentReason(val) {
+  const dateKey = formatDateKey(getTargetDate());
+  const rec = ensureDayRec(dateKey);
+  rec.myStatus = 'absent';
+  rec.myReason = val;
+  rec.holiday = (val === 'Public / University Holiday' || val === 'Vacation / Term Break');
+  queueSave(); renderToday(); renderCalendar(); renderAnalytics();
+}
+
+function setMyAbsentCustomNote(val) {
+  const dateKey = formatDateKey(getTargetDate());
+  const rec = ensureDayRec(dateKey);
+  rec.myStatus = 'absent';
+  rec.myReason = '__CUSTOM__';
+  rec.myCustomReason = val.trim();
+  queueSave(); renderToday(); renderCalendar(); renderAnalytics();
+}
+
 function toggleHoliday() {
   const dateKey = formatDateKey(getTargetDate());
   const rec = ensureDayRec(dateKey);
   rec.holiday = !rec.holiday;
-  queueSave(); renderToday(); renderCalendar();
+  if (rec.holiday) {
+    rec.myStatus = 'absent';
+    rec.myReason = 'Public / University Holiday';
+  } else if (rec.myReason === 'Public / University Holiday') {
+    rec.myStatus = '';
+    rec.myReason = '';
+  }
+  queueSave(); renderToday(); renderCalendar(); renderAnalytics();
 }
 
 function deleteExtraWork(id) {
@@ -1454,20 +1606,28 @@ function renderCalendar() {
     const d = new Date(year, month, day);
     const key = formatDateKey(d);
     const dName = dayNames[d.getDay()];
-    const rec = ws.dailyOverrides[key] || { holiday: false, logs: {} };
+    const rec = ws.dailyOverrides[key] || { holiday: false, logs: {}, myStatus: '', myReason: '', myCustomReason: '' };
     const daySlots = ws.timetable.filter(s => s.profileId === ws.activeProfileId && s.day === dName);
     const deliveredCount = Object.values(rec.logs || {}).filter(v => v === 'delivered' || v === 'proxy').length;
     const extras = (ws.extraWork || []).filter(w => w.date === key && w.profileId === ws.activeProfileId);
     const opps = ws.opportunities.filter(o => o.deadline === key);
+    const reasonLabel = rec.myReason === '__CUSTOM__' ? (rec.myCustomReason || 'Leave') : (rec.myReason || (rec.holiday ? 'Holiday' : 'Absent'));
+    const isAbsent = rec.myStatus === 'absent' || rec.holiday;
+    const isPresent = rec.myStatus === 'present';
 
     html += `
-      <div class="cal-cell ${key === todayKey ? 'today-cell' : ''} ${rec.holiday ? 'holiday-cell' : ''}" onclick="jumpToDate('${key}')">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div class="cal-cell ${key === todayKey ? 'today-cell' : ''} ${isAbsent ? 'absent-cell' : isPresent ? 'present-cell' : ''}" onclick="jumpToDate('${key}')">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:4px;">
           <strong style="font-size:13px;">${day}</strong>
-          ${rec.holiday ? `<span style="font-size:10px; color:var(--crimson); font-weight:700;">HOLIDAY</span>` : ''}
+          ${isAbsent
+            ? `<span style="font-size:9.5px; color:var(--crimson); font-weight:700; text-transform:uppercase;">ABSENT</span>`
+            : isPresent
+              ? `<span style="font-size:9.5px; color:var(--emerald); font-weight:700; text-transform:uppercase;">PRESENT</span>`
+              : ''}
         </div>
         <div class="cal-dots">
-          ${deliveredCount > 0 ? `<span class="cal-tag b-emerald">${deliveredCount} Taught</span>` : (daySlots.length > 0 && !rec.holiday ? `<span class="cal-tag b-accent">${daySlots.length} Classes</span>` : '')}
+          ${isAbsent ? `<span class="cal-tag b-crimson" title="${escapeHtml(reasonLabel)}">${escapeHtml(reasonLabel)}</span>` : ''}
+          ${deliveredCount > 0 ? `<span class="cal-tag b-emerald">${deliveredCount} Taught</span>` : (daySlots.length > 0 && !isAbsent ? `<span class="cal-tag b-accent">${daySlots.length} Classes</span>` : '')}
           ${extras.length > 0 ? `<span class="cal-tag b-amber">+${extras.length} Extra</span>` : ''}
           ${opps.map(o => `<span class="cal-tag b-crimson">${escapeHtml(o.title)}</span>`).join('')}
         </div>
@@ -1748,9 +1908,20 @@ function downloadLogbookPdf() {
     periodLabel = `Week: ${formatDateKey(weekStart)} to ${formatDateKey(weekEnd)}`;
   }
 
-  const regularCount = breakdown.lectures;
-  const proxyCount = breakdown.extraTotal;
-  const extraCount = breakdown.reels + breakdown.exams;
+  let pdfPresentCount = 0, pdfAbsentCount = 0;
+  const pdfAbsentDetails = [];
+  Object.entries(ws.dailyOverrides || {}).forEach(([dk, rec]) => {
+    const inPeriod = pType === 'all' ? true :
+      pType === 'month' ? dk.startsWith(monthVal) :
+      (pType === 'week' && weekStart && weekEnd) ? (new Date(dk + 'T00:00:00') >= weekStart && new Date(dk + 'T00:00:00') <= weekEnd) : true;
+    if (!inPeriod) return;
+    if (rec.myStatus === 'present') pdfPresentCount++;
+    else if (rec.myStatus === 'absent' || rec.holiday) {
+      pdfAbsentCount++;
+      const rTxt = rec.myReason === '__CUSTOM__' ? (rec.myCustomReason || 'Leave') : (rec.myReason || 'Holiday');
+      pdfAbsentDetails.push(`${dk} (${rTxt})`);
+    }
+  });
 
   const printHtml = `
     <div style="font-family: 'Inter', Arial, sans-serif; color:#0F172A; padding:24px;">
@@ -1765,6 +1936,7 @@ function downloadLogbookPdf() {
           </div>
           <h1 style="font-size:20px; margin:4px 0;">${escapeHtml(session.user.name)}</h1>
           <div style="font-size:12px; color:#475569;">${escapeHtml(profile.institution || session.user.institution || '')} &bull; ${escapeHtml(profile.name)}</div>
+          <div style="font-size:11.5px; color:#1E3A8A; font-weight:600; margin-top:4px;">Faculty Attendance: ${pdfPresentCount} Present &bull; ${pdfAbsentCount} Absent/Off ${pdfAbsentDetails.length ? '(' + escapeHtml(pdfAbsentDetails.join(', ')) + ')' : ''}</div>
         </div>
         <div style="text-align:right; font-size:12px;">
           <div style="font-weight:700; color:#1E3A8A;">${periodLabel}</div>
@@ -1980,16 +2152,28 @@ function renderAnalytics() {
     });
   });
 
+  let presentDays = 0, absentDays = 0;
+  const absentBreakdown = {};
+  Object.values(ws.dailyOverrides || {}).forEach(dayRec => {
+    if (dayRec.myStatus === 'present') presentDays++;
+    else if (dayRec.myStatus === 'absent' || dayRec.holiday) {
+      absentDays++;
+      const rLabel = dayRec.myReason === '__CUSTOM__' ? (dayRec.myCustomReason || 'Custom Leave') : (dayRec.myReason || 'Public / University Holiday');
+      absentBreakdown[rLabel] = (absentBreakdown[rLabel] || 0) + 1;
+    }
+  });
+
   const extraHours = (ws.extraWork || []).reduce((acc, w) => acc + (parseFloat(w.hours) || 0), 0);
   const allUnits = ws.subjects.flatMap(s => s.units || []);
   const avgSyllabus = allUnits.length ? Math.round((allUnits.filter(u => u.done).length / allUnits.length) * 100) : 0;
   const publishedCount = ws.research.filter(r => r.stage === 'Published').length;
+  const topReasons = Object.entries(absentBreakdown).map(([k, v]) => `${k}: ${v}`).join(' • ') || 'No leaves recorded';
 
   document.getElementById('analyticsKpis').innerHTML = `
+    <div class="card"><div style="font-size:12px;color:var(--muted);">My Attendance</div><div class="serif" style="font-size:26px;font-weight:700;color:var(--emerald);">${presentDays} Present</div><div style="font-size:11.5px;color:var(--crimson);">${absentDays} Absent/Off (${escapeHtml(topReasons)})</div></div>
     <div class="card"><div style="font-size:12px;color:var(--muted);">Lectures Delivered</div><div class="serif" style="font-size:28px;font-weight:700;color:var(--accent);">${deliveredCount}</div><div style="font-size:11.5px;color:var(--emerald);">+${proxyCount} proxy sessions</div></div>
     <div class="card"><div style="font-size:12px;color:var(--muted);">Extra Academic Hours</div><div class="serif" style="font-size:28px;font-weight:700;color:var(--amber);">${extraHours}h</div><div style="font-size:11.5px;color:var(--muted);">${(ws.extraWork||[]).length} logged duties</div></div>
-    <div class="card"><div style="font-size:12px;color:var(--muted);">Avg Syllabus Progress</div><div class="serif" style="font-size:28px;font-weight:700;">${avgSyllabus}%</div><div style="font-size:11.5px;color:var(--muted);">Across ${ws.subjects.length} subjects</div></div>
-    <div class="card"><div style="font-size:12px;color:var(--muted);">Research Published</div><div class="serif" style="font-size:28px;font-weight:700;color:var(--emerald);">${publishedCount} / ${ws.research.length}</div><div style="font-size:11.5px;color:var(--muted);">Manuscripts &amp; papers</div></div>
+    <div class="card"><div style="font-size:12px;color:var(--muted);">Avg Syllabus &amp; Research</div><div class="serif" style="font-size:28px;font-weight:700;">${avgSyllabus}%</div><div style="font-size:11.5px;color:var(--emerald);">${publishedCount}/${ws.research.length} papers published</div></div>
   `;
 
   const maxType = Math.max(1, ...Object.values(bySessionType));
