@@ -396,6 +396,78 @@
   .cal-cell.present-cell { border-bottom: 3px solid var(--emerald); }
   .cal-cell.absent-cell { background: var(--crimson-soft); border-color: rgba(220, 38, 38, 0.35); }
 
+  /* Student Attendance Roster */
+  .sem-pill-bar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .sem-tab-btn {
+    padding: 8px 15px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.18s var(--ease);
+  }
+  .sem-tab-btn:hover { border-color: var(--accent); color: var(--ink); }
+  .sem-tab-btn.active {
+    background: var(--accent-grad);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 12px var(--accent-soft);
+  }
+  [data-theme="dark"] .sem-tab-btn.active { color: #070B14; }
+  .stu-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    margin-bottom: 8px;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.16s var(--ease);
+  }
+  .stu-row:hover { border-color: var(--accent); background: var(--surface); transform: translateY(-1px); }
+  .stu-row.is-present {
+    border-left: 5px solid var(--emerald);
+    background: rgba(5, 150, 105, 0.05);
+  }
+  .stu-row.is-absent {
+    border-left: 5px solid var(--crimson);
+    background: rgba(220, 38, 38, 0.05);
+  }
+  .stu-roll {
+    min-width: 46px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    background: var(--surface-3);
+    font-weight: 700;
+    font-size: 12.5px;
+    text-align: center;
+    color: var(--accent);
+  }
+  .stu-tap-badge {
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    min-width: 96px;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .stu-tap-badge.present { background: var(--emerald); color: #fff; }
+  .stu-tap-badge.absent { background: var(--crimson); color: #fff; }
+  .stu-tap-badge.unmarked { background: var(--surface-3); color: var(--muted); }
+
   /* Rich Lecture Slot Card on Today View */
   .lecture-card {
     background: var(--surface);
@@ -656,6 +728,10 @@
         <svg viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
         <span class="nav-label">Timetable &amp; Subjects</span>
       </button>
+      <button class="nav-item" data-view="attendance" title="Student Attendance (Sem 2-4-6)" onclick="navigate('attendance')">
+        <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
+        <span class="nav-label">Student Attendance</span>
+      </button>
       <button class="nav-item" data-view="logbook" title="Teaching Logbook &amp; PDF" onclick="navigate('logbook')">
         <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         <span class="nav-label">Teaching Logbook &amp; PDF</span>
@@ -832,6 +908,72 @@
             <span class="card-title">Subjects &amp; Syllabus Units</span>
           </div>
           <div id="subjectsGrid" class="grid-3"></div>
+        </div>
+      </section>
+
+      <!-- 3B. STUDENT ATTENDANCE VIEW (ALL SEMESTERS UNDER ONE TAB) -->
+      <section id="view-attendance" class="view-section hidden">
+        <div class="card card-banner" style="margin-bottom:20px;">
+          <div class="card-header">
+            <div>
+              <h2 class="serif" style="font-size:26px;">Student Attendance Register</h2>
+              <p style="font-size:13px; color:var(--muted);">Switch semesters, filter by subject, tap any student row to toggle Present/Absent, or carry students forward to the next semester.</p>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn btn-ghost btn-sm" onclick="openDrawer('addSemStudent')">+ Add Semester / Student</button>
+              <button class="btn btn-ghost btn-sm" onclick="openDrawer('promoteSem')">&#8635; Carry Forward Term</button>
+              <button class="btn btn-primary btn-sm" onclick="downloadStudentAttendancePdf()">&#128196; Download Attendance Log</button>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding-top:12px; border-top:1px solid var(--border);">
+            <div class="sem-pill-bar" id="attSemTabs"></div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+              <input type="date" id="attDatePicker" onchange="renderStudentAttendance()" style="width:auto; padding:6px 10px; font-size:13px;">
+              <select id="attSubjectSelect" onchange="renderStudentAttendance()" style="width:auto; min-width:190px; padding:7px 10px; font-size:13px;"></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <span class="card-title" id="attRosterHeading">Semester Roster</span>
+                <div style="font-size:12px; color:var(--muted);" id="attRosterStats">Tap a student row to toggle Present / Absent</div>
+              </div>
+              <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                <button class="btn btn-sm btn-ghost" style="color:var(--emerald);" onclick="markAllStudents('present')">&#10003; Mark All Present</button>
+                <button class="btn btn-sm btn-ghost" style="color:var(--crimson);" onclick="markAllStudents('absent')">&#10005; Mark All Absent</button>
+              </div>
+            </div>
+
+            <div style="margin-bottom:12px;">
+              <input type="text" id="attSearchInput" placeholder="Search by Roll No. or Student Name..." oninput="renderStudentAttendance()" style="padding:8px 12px; font-size:13px;">
+            </div>
+
+            <div id="studentRosterList"></div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:18px;">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Attendance Summary &amp; Export</span>
+              </div>
+              <div id="attSummaryBox" style="font-size:13.5px;"></div>
+              <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:14px;">
+                <button class="btn btn-primary btn-sm" style="flex:1;" onclick="downloadStudentAttendancePdf()">&#128196; PDF Attendance Sheet</button>
+                <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="downloadStudentAttendanceCsv()">&#128202; Export CSV / Excel</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Recent Sessions Logged (This Semester)</span>
+              </div>
+              <div id="attRecentLogsList"></div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -1026,6 +1168,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const now = new Date();
   document.getElementById('logMonthPicker').value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
   document.getElementById('logWeekPicker').value = formatDateKey(now);
+  const attDp = document.getElementById('attDatePicker'); if (attDp) attDp.value = formatDateKey(now);
   if (session && session.user && session.token) {
     bootWorkspace();
   }
@@ -1088,6 +1231,21 @@ function normalizeWorkspace(data) {
   data.research = data.research || [];
   data.opportunities = data.opportunities || [];
   data.vaultLinks = data.vaultLinks || [];
+  data.studentSemesters = data.studentSemesters || [
+    { id: 'sem_2', name: 'BA Sem 2', yearLabel: 'First Year', nextSemId: 'sem_3' },
+    { id: 'sem_4', name: 'BA Sem 4', yearLabel: 'Second Year', nextSemId: 'sem_5' },
+    { id: 'sem_6', name: 'BA Sem 6', yearLabel: 'Third Year', nextSemId: '' }
+  ];
+  if (!data.students || data.students.length === 0) {
+    const s2 = [{"roll": "108", "name": "AMARKUMAR RANJITBHAI KOKANI"}, {"roll": "109", "name": "ANAM BASIT PATEL"}, {"roll": "110", "name": "CHAITALIBEN SURESHBHAI VANSFODA"}, {"roll": "111", "name": "DIMPALBEN SACHINBHAI RANDHIR"}, {"roll": "112", "name": "DIPAK ISHWARBHAI MAKWANA"}, {"roll": "113", "name": "GOLDI MUKESH PANDE"}, {"roll": "114", "name": "GULALE PURNAYU DINESHBHAI"}, {"roll": "115", "name": "JIDNYASA ANIL SALI"}, {"roll": "117", "name": "MADHURI PRAVIN PATIL"}, {"roll": "118", "name": "MAHESHWARI SHREECHAND GUPTA"}, {"roll": "119", "name": "MAKWANA BINALKUMARI MAHESHBHAI"}, {"roll": "120", "name": "MAYUR SAGARBHAI RATHOD"}, {"roll": "121", "name": "MAYVISH SHAKIL AHEMAD PATEL"}, {"roll": "122", "name": "NEHA DILIP PATIL"}, {"roll": "124", "name": "POONAM DNYANESHWAR JANJALKAR"}, {"roll": "125", "name": "PRATIBHA SAHEBRAO RAJPUT"}, {"roll": "126", "name": "PRIYANKA BHASKAR SHIRSATH"}, {"roll": "127", "name": "PRIYANSHIBEN KISHORBHAI GAMIT"}, {"roll": "128", "name": "RUPA DHARMENDRAKUMAR HARJAN"}, {"roll": "130", "name": "SHREY NILESHBHAI GAMIT"}, {"roll": "131", "name": "SHRUTIKKUMAR NILESHBHAI GAMIT"}, {"roll": "132", "name": "SVINALBEN SURESHBHAI GAMIT"}, {"roll": "133", "name": "YASH VIJAY KOLI"}, {"roll": "213", "name": "PATEL HARPITA MAHENDRABHAI"}, {"roll": "214", "name": "KOMAL CHITTARANJAN NAYAK"}, {"roll": "215", "name": "JAVIDKHAN AMJADKHAN PATHAN"}, {"roll": "232", "name": "AKSA NAAZ ZAKIR SHAIKH"}];
+    const s4 = [{"roll": "39", "name": "CHAUDHARI JAYKUMAR MANSUKHBHAI"}, {"roll": "40", "name": "GUPTA MEET SHREECHANDKUMAR"}, {"roll": "41", "name": "KANOJIYA HANSA VIJAYPRAKASH"}, {"roll": "42", "name": "KHAIRNAR RAHUL JANKIRAM"}, {"roll": "44", "name": "Patel Fayzabanu Aarif"}, {"roll": "45", "name": "Patel Sabihabanu Molvi Yusuf"}, {"roll": "46", "name": "Shaikh Sagufta Salam"}, {"roll": "47", "name": "TAMKHANE UNNATI BHATUBHAI"}, {"roll": "48", "name": "VASAVA AYUSHIBEN MUKESHBHAI"}, {"roll": "49", "name": "VASAVA HARSHADBHAI ISHWARBHAI"}, {"roll": "50", "name": "VASAVA PRIYALKUMARI BAHADURBHAI"}];
+    data.students = [
+      ...s2.map((st, idx) => ({ id: 'stu_s2_' + st.roll + '_' + idx, semId: 'sem_2', roll: st.roll, name: st.name, subjectIds: [] })),
+      ...s4.map((st, idx) => ({ id: 'stu_s4_' + st.roll + '_' + idx, semId: 'sem_4', roll: st.roll, name: st.name, subjectIds: [] }))
+    ];
+  }
+  data.studentAttendance = data.studentAttendance || {};
+
   data.settings = data.settings || {};
   data.settings.extraCategories = data.settings.extraCategories || [
     'Proxy / Extra Lecture',
@@ -1277,6 +1435,7 @@ function renderAll() {
   renderToday();
   renderCalendar();
   renderTeaching();
+  renderStudentAttendance();
   renderLogbook();
   renderResearch();
   renderOpportunities();
@@ -1730,6 +1889,425 @@ function deleteSubject(id) {
 function deleteSlot(id) {
   ws.timetable = ws.timetable.filter(s => s.id !== id);
   queueSave(); renderTeaching(); renderToday();
+}
+
+
+/* ==========================================================================
+   3B. STUDENT ATTENDANCE REGISTER (SEM 2-4-6, TAP-TO-MARK, CARRY FORWARD)
+   ========================================================================== */
+let activeAttSemId = 'sem_2';
+
+function renderStudentAttendance() {
+  if (!ws || !ws.studentSemesters) return;
+  if (!ws.studentSemesters.some(s => s.id === activeAttSemId) && ws.studentSemesters.length > 0) {
+    activeAttSemId = ws.studentSemesters[0].id;
+  }
+
+  // Render Semester Switcher Tabs
+  const tabsEl = document.getElementById('attSemTabs');
+  if (tabsEl) {
+    tabsEl.innerHTML = ws.studentSemesters.map(sem => {
+      const count = (ws.students || []).filter(st => st.semId === sem.id).length;
+      return `<button type="button" class="sem-tab-btn ${sem.id === activeAttSemId ? 'active' : ''}" onclick="switchAttSemester('${sem.id}')">${escapeHtml(sem.name)} <span style="opacity:0.8;font-size:11.5px;">(${count})</span></button>`;
+    }).join('');
+  }
+
+  // Populate Subject Filter Dropdown for this profile/semester
+  const subjSel = document.getElementById('attSubjectSelect');
+  const prevSubj = subjSel ? subjSel.value : 'ALL_SUBJ';
+  const activeSubs = (ws.subjects || []).filter(s => s.profileId === ws.activeProfileId);
+  if (subjSel) {
+    subjSel.innerHTML = `<option value="ALL_SUBJ">All Semester Students (General)</option>` +
+      activeSubs.map(s => `<option value="${s.id}">${escapeHtml(s.title)} ${s.code ? '('+escapeHtml(s.code)+')' : ''}</option>`).join('');
+    subjSel.value = Array.from(subjSel.options).some(o => o.value === prevSubj) ? prevSubj : 'ALL_SUBJ';
+  }
+
+  const dateKey = (document.getElementById('attDatePicker') && document.getElementById('attDatePicker').value) || formatDateKey(new Date());
+  const subjId = subjSel ? subjSel.value : 'ALL_SUBJ';
+  const searchQ = (document.getElementById('attSearchInput')?.value || '').trim().toLowerCase();
+
+  // Filter students by selected Semester + optional Subject enrollment
+  let semStudents = (ws.students || []).filter(st => st.semId === activeAttSemId);
+  if (subjId !== 'ALL_SUBJ') {
+    const enrolledSpecific = semStudents.filter(st => Array.isArray(st.subjectIds) && st.subjectIds.length > 0);
+    if (enrolledSpecific.length > 0) {
+      semStudents = semStudents.filter(st => Array.isArray(st.subjectIds) && st.subjectIds.includes(subjId));
+    }
+  }
+  semStudents.sort((a, b) => (parseInt(a.roll, 10) || 9999) - (parseInt(b.roll, 10) || 9999));
+
+  const sessionKey = `${dateKey}__${activeAttSemId}__${subjId}`;
+  ws.studentAttendance = ws.studentAttendance || {};
+  const sessionRecord = ws.studentAttendance[sessionKey] || {};
+
+  let presentCount = 0, absentCount = 0;
+  semStudents.forEach(st => {
+    const val = sessionRecord[st.id];
+    if (val === 'P') presentCount++;
+    else if (val === 'A') absentCount++;
+  });
+
+  const curSemObj = ws.studentSemesters.find(s => s.id === activeAttSemId) || { name: 'Semester' };
+  document.getElementById('attRosterHeading').textContent = `${curSemObj.name} — ${dateKey}`;
+  document.getElementById('attRosterStats').textContent = `Total: ${semStudents.length} • Present: ${presentCount} • Absent: ${absentCount} • Unmarked: ${semStudents.length - presentCount - absentCount}`;
+
+  const visibleStudents = searchQ
+    ? semStudents.filter(st => st.roll.toLowerCase().includes(searchQ) || st.name.toLowerCase().includes(searchQ))
+    : semStudents;
+
+  const listEl = document.getElementById('studentRosterList');
+  if (visibleStudents.length === 0) {
+    listEl.innerHTML = `<div style="text-align:center; padding:24px 12px; color:var(--muted);">
+      <p style="font-size:13.5px; margin-bottom:10px;">No students listed under <strong>${escapeHtml(curSemObj.name)}</strong> yet.</p>
+      <button class="btn btn-primary btn-sm" onclick="openDrawer('addSemStudent')">+ Add Students to ${escapeHtml(curSemObj.name)}</button>
+    </div>`;
+  } else {
+    listEl.innerHTML = visibleStudents.map(st => {
+      const state = sessionRecord[st.id] || '';
+      const rowCls = state === 'P' ? 'is-present' : state === 'A' ? 'is-absent' : '';
+      const badgeCls = state === 'P' ? 'present' : state === 'A' ? 'absent' : 'unmarked';
+      const badgeTxt = state === 'P' ? 'PRESENT' : state === 'A' ? 'ABSENT' : 'TAP TO MARK';
+      return `
+        <div class="stu-row ${rowCls}" onclick="toggleStudentAtt('${st.id}')">
+          <div style="display:flex; align-items:center; gap:11px; min-width:0;">
+            <span class="stu-roll">${escapeHtml(st.roll)}</span>
+            <div style="font-weight:600; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(st.name)}</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+            <span class="stu-tap-badge ${badgeCls}">${badgeTxt}</span>
+            <button type="button" class="btn btn-sm btn-danger" style="padding:3px 7px;" title="Remove student" onclick="event.stopPropagation(); deleteStudent('${st.id}')">&times;</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  // Summary Box
+  const pct = semStudents.length ? Math.round((presentCount / semStudents.length) * 100) : 0;
+  document.getElementById('attSummaryBox').innerHTML = `
+    <div style="display:flex; flex-direction:column; gap:9px;">
+      <div style="display:flex; justify-content:space-between;"><span>Active Class</span><strong>${escapeHtml(curSemObj.name)}</strong></div>
+      <div style="display:flex; justify-content:space-between;"><span>Present Today</span><span class="badge b-emerald">${presentCount} Students</span></div>
+      <div style="display:flex; justify-content:space-between;"><span>Absent Today</span><span class="badge b-crimson">${absentCount} Students</span></div>
+      <div style="display:flex; justify-content:space-between;"><span>Attendance Rate</span><strong>${pct}%</strong></div>
+    </div>
+  `;
+
+  // Recent Logged Sessions for this Semester
+  const recentKeys = Object.keys(ws.studentAttendance)
+    .filter(k => k.includes(`__${activeAttSemId}__`) && Object.keys(ws.studentAttendance[k]).length > 0)
+    .sort((a, b) => b.localeCompare(a))
+    .slice(0, 8);
+
+  const recentEl = document.getElementById('attRecentLogsList');
+  if (recentKeys.length === 0) {
+    recentEl.innerHTML = `<p style="color:var(--muted); font-size:13px;">No attendance sessions recorded yet for ${escapeHtml(curSemObj.name)}.</p>`;
+  } else {
+    recentEl.innerHTML = recentKeys.map(k => {
+      const [dPart, , sPart] = k.split('__');
+      const recObj = ws.studentAttendance[k];
+      const pCnt = Object.values(recObj).filter(v => v === 'P').length;
+      const aCnt = Object.values(recObj).filter(v => v === 'A').length;
+      const subObj = ws.subjects.find(x => x.id === sPart);
+      const subLabel = subObj ? subObj.title : 'General Attendance';
+      return `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); cursor:pointer;" onclick="loadAttSession('${dPart}', '${sPart}')">
+          <div>
+            <strong style="font-size:13px;">${dPart}</strong>
+            <div style="font-size:11.5px; color:var(--muted);">${escapeHtml(subLabel)}</div>
+          </div>
+          <div style="display:flex; gap:5px;">
+            <span class="badge b-emerald">${pCnt} P</span>
+            <span class="badge b-crimson">${aCnt} A</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+}
+
+function switchAttSemester(semId) {
+  activeAttSemId = semId;
+  renderStudentAttendance();
+}
+
+function loadAttSession(dateStr, subjId) {
+  document.getElementById('attDatePicker').value = dateStr;
+  document.getElementById('attSubjectSelect').value = subjId;
+  renderStudentAttendance();
+}
+
+function toggleStudentAtt(studentId) {
+  const dateKey = document.getElementById('attDatePicker').value || formatDateKey(new Date());
+  const subjId = document.getElementById('attSubjectSelect').value || 'ALL_SUBJ';
+  const sessionKey = `${dateKey}__${activeAttSemId}__${subjId}`;
+  ws.studentAttendance = ws.studentAttendance || {};
+  ws.studentAttendance[sessionKey] = ws.studentAttendance[sessionKey] || {};
+
+  const cur = ws.studentAttendance[sessionKey][studentId] || '';
+  // Tap cycle: Unmarked -> Present (P) -> Absent (A) -> Present (P)
+  ws.studentAttendance[sessionKey][studentId] = cur === 'P' ? 'A' : 'P';
+  queueSave();
+  renderStudentAttendance();
+}
+
+function markAllStudents(status) {
+  const dateKey = document.getElementById('attDatePicker').value || formatDateKey(new Date());
+  const subjId = document.getElementById('attSubjectSelect').value || 'ALL_SUBJ';
+  const sessionKey = `${dateKey}__${activeAttSemId}__${subjId}`;
+  ws.studentAttendance = ws.studentAttendance || {};
+  ws.studentAttendance[sessionKey] = ws.studentAttendance[sessionKey] || {};
+
+  let semStudents = (ws.students || []).filter(st => st.semId === activeAttSemId);
+  if (subjId !== 'ALL_SUBJ') {
+    const enrolledSpecific = semStudents.filter(st => Array.isArray(st.subjectIds) && st.subjectIds.length > 0);
+    if (enrolledSpecific.length > 0) {
+      semStudents = semStudents.filter(st => Array.isArray(st.subjectIds) && st.subjectIds.includes(subjId));
+    }
+  }
+  const code = status === 'present' ? 'P' : 'A';
+  semStudents.forEach(st => {
+    ws.studentAttendance[sessionKey][st.id] = code;
+  });
+  queueSave();
+  renderStudentAttendance();
+  showToast(`Marked all ${semStudents.length} students ${status === 'present' ? 'Present' : 'Absent'}`);
+}
+
+function deleteStudent(id) {
+  if (!confirm('Remove this student from the roster?')) return;
+  ws.students = ws.students.filter(st => st.id !== id);
+  queueSave();
+  renderStudentAttendance();
+}
+
+function saveNewSemOrStudents() {
+  const mode = document.getElementById('dStuMode').value;
+  let targetSemId = document.getElementById('dStuSemSelect').value;
+
+  if (mode === 'NEW_SEM') {
+    const newSemName = document.getElementById('dNewSemName').value.trim();
+    const newSemYear = document.getElementById('dNewSemYear').value.trim() || 'Academic Term';
+    if (!newSemName) { showToast('Enter new semester name'); return; }
+    targetSemId = 'sem_' + Date.now().toString(36);
+    ws.studentSemesters.push({ id: targetSemId, name: newSemName, yearLabel: newSemYear, nextSemId: '' });
+  }
+
+  const subjId = document.getElementById('dStuSubjSelect').value;
+  const bulkLines = document.getElementById('dStuBulkInput').value.split('\n').map(l => l.trim()).filter(Boolean);
+
+  let added = 0;
+  bulkLines.forEach((line, i) => {
+    // Parse "RollNo Name" or "RollNo	Name" or "RollNo, Name"
+    const match = line.match(/^([A-Za-z0-9-]+)[\s,	-]+(.+)$/);
+    const roll = match ? match[1].trim() : String(added + 1);
+    const name = match ? match[2].trim() : line.trim();
+    if (name) {
+      ws.students.push({
+        id: 'stu_' + Date.now().toString(36) + '_' + i,
+        semId: targetSemId,
+        roll,
+        name,
+        subjectIds: subjId && subjId !== 'ALL_SUBJ' ? [subjId] : []
+      });
+      added++;
+    }
+  });
+
+  activeAttSemId = targetSemId;
+  queueSave();
+  closeDrawer();
+  renderStudentAttendance();
+  showToast(added > 0 ? `Added ${added} student(s)` : 'Semester saved');
+}
+
+function executeTermCarryForward() {
+  const fromSemId = document.getElementById('dPromoteFrom').value;
+  const toSemVal = document.getElementById('dPromoteTo').value;
+  const customToName = document.getElementById('dPromoteCustomName').value.trim();
+
+  if (!fromSemId) return;
+  let targetSemId = toSemVal;
+
+  if (toSemVal === '__NEW__') {
+    if (!customToName) { showToast('Enter target semester name'); return; }
+    targetSemId = 'sem_' + Date.now().toString(36);
+    ws.studentSemesters.push({ id: targetSemId, name: customToName, yearLabel: 'Promoted Term', nextSemId: '' });
+  }
+
+  if (fromSemId === targetSemId) {
+    showToast('Source and target semester must be different');
+    return;
+  }
+
+  const movingStudents = (ws.students || []).filter(st => st.semId === fromSemId);
+  if (movingStudents.length === 0) {
+    showToast('No students found in selected source semester');
+    return;
+  }
+
+  movingStudents.forEach(st => {
+    st.semId = targetSemId;
+  });
+
+  activeAttSemId = targetSemId;
+  queueSave();
+  closeDrawer();
+  renderStudentAttendance();
+  showToast(`Carried forward ${movingStudents.length} students!`);
+}
+
+function downloadStudentAttendanceCsv() {
+  const curSem = ws.studentSemesters.find(s => s.id === activeAttSemId) || { name: 'Semester' };
+  const dateKey = document.getElementById('attDatePicker').value || formatDateKey(new Date());
+  const subjId = document.getElementById('attSubjectSelect').value || 'ALL_SUBJ';
+  const sessionKey = `${dateKey}__${activeAttSemId}__${subjId}`;
+  const sessionRecord = (ws.studentAttendance || {})[sessionKey] || {};
+
+  let semStudents = (ws.students || []).filter(st => st.semId === activeAttSemId)
+    .sort((a, b) => (parseInt(a.roll, 10) || 9999) - (parseInt(b.roll, 10) || 9999));
+
+  const lines = ['"Roll No","Student Name","Semester","Date","Status"'];
+  semStudents.forEach(st => {
+    const stCode = sessionRecord[st.id] === 'P' ? 'Present' : sessionRecord[st.id] === 'A' ? 'Absent' : 'Not Marked';
+    lines.push(`"${st.roll}","${st.name.replace(/"/g, '""')}","${curSem.name}","${dateKey}","${stCode}"`);
+  });
+
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ATHENA_Attendance_${curSem.name.replace(/\s+/g, '_')}_${dateKey}.csv`;
+  a.click();
+  showToast('CSV Attendance Log downloaded');
+}
+
+function downloadStudentAttendancePdf() {
+  const curSem = ws.studentSemesters.find(s => s.id === activeAttSemId) || { name: 'Semester' };
+  const dateKey = document.getElementById('attDatePicker').value || formatDateKey(new Date());
+  const subjId = document.getElementById('attSubjectSelect').value || 'ALL_SUBJ';
+  const subObj = ws.subjects.find(x => x.id === subjId);
+  const subTitle = subObj ? `${subObj.title} ${subObj.code ? '(' + subObj.code + ')' : ''}` : 'All Subjects / General';
+  const profile = ws.profiles.find(p => p.id === ws.activeProfileId) || { name: 'Current Term', institution: session.user.institution };
+
+  const sessionKey = `${dateKey}__${activeAttSemId}__${subjId}`;
+  const sessionRecord = (ws.studentAttendance || {})[sessionKey] || {};
+
+  let semStudents = (ws.students || []).filter(st => st.semId === activeAttSemId);
+  if (subjId !== 'ALL_SUBJ') {
+    const enrolledSpecific = semStudents.filter(st => Array.isArray(st.subjectIds) && st.subjectIds.length > 0);
+    if (enrolledSpecific.length > 0) {
+      semStudents = semStudents.filter(st => Array.isArray(st.subjectIds) && st.subjectIds.includes(subjId));
+    }
+  }
+  semStudents.sort((a, b) => (parseInt(a.roll, 10) || 9999) - (parseInt(b.roll, 10) || 9999));
+
+  // Also compute cumulative sessions count per student across this semester
+  const allSemSessions = Object.entries(ws.studentAttendance || {}).filter(([k]) => k.includes(`__${activeAttSemId}__`));
+
+  let pTotal = 0, aTotal = 0;
+  const rowsHtml = semStudents.map(st => {
+    const code = sessionRecord[st.id] || '';
+    if (code === 'P') pTotal++;
+    if (code === 'A') aTotal++;
+    const statusLabel = code === 'P' ? '<span style="color:#059669;font-weight:700;">Present</span>' :
+                        code === 'A' ? '<span style="color:#DC2626;font-weight:700;">Absent</span>' :
+                        '<span style="color:#64748B;">-</span>';
+
+    let cumP = 0, cumTotal = 0;
+    allSemSessions.forEach(([, rec]) => {
+      if (rec[st.id] === 'P') { cumP++; cumTotal++; }
+      else if (rec[st.id] === 'A') { cumTotal++; }
+    });
+    const cumPct = cumTotal ? Math.round((cumP / cumTotal) * 100) + '%' : '-';
+
+    return `
+      <tr>
+        <td style="padding:6px 8px; border:1px solid #CBD5E1; font-weight:700; text-align:center;">${escapeHtml(st.roll)}</td>
+        <td style="padding:6px 8px; border:1px solid #CBD5E1;">${escapeHtml(st.name)}</td>
+        <td style="padding:6px 8px; border:1px solid #CBD5E1; text-align:center;">${statusLabel}</td>
+        <td style="padding:6px 8px; border:1px solid #CBD5E1; text-align:center;">${cumP} / ${cumTotal} (${cumPct})</td>
+      </tr>
+    `;
+  }).join('');
+
+  const printHtml = `
+    <div style="font-family: 'Inter', Arial, sans-serif; color:#0F172A; padding:22px;">
+      <div style="border-bottom:2px solid #1E3A8A; padding-bottom:12px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:flex-end;">
+        <div>
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+            <img id="pdfAttLogoImg" src="${LOGO_SRC}" width="36" height="36" style="width:36px; height:36px; border-radius:8px; display:block;">
+            <div>
+              <div style="font-family: 'Cinzel', Georgia, serif; font-size:20px; font-weight:800; letter-spacing:3px; text-transform:uppercase; color:#1E3A8A; line-height:1.05;">ATHENA</div>
+              <div style="display:inline-block; font-size:8.5px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase; color:#475569; margin-top:2px; padding-top:2px; border-top:1px solid #CBD5E1;">Student Attendance Sheet</div>
+            </div>
+          </div>
+          <div style="font-size:15px; font-weight:700;">${escapeHtml(curSem.name)} &mdash; ${escapeHtml(subTitle)}</div>
+          <div style="font-size:11.5px; color:#475569;">Faculty: ${escapeHtml(session.user.name)} &bull; ${escapeHtml(profile.institution || session.user.institution || '')}</div>
+        </div>
+        <div style="text-align:right; font-size:12px;">
+          <div style="font-weight:700; color:#1E3A8A;">Date: ${dateKey}</div>
+          <div style="color:#059669; font-weight:600;">Present: ${pTotal} | Absent: ${aTotal}</div>
+        </div>
+      </div>
+
+      <table style="width:100%; border-collapse:collapse; font-size:11px;">
+        <thead>
+          <tr style="background:#1E3A8A; color:#FFFFFF;">
+            <th style="padding:7px; border:1px solid #1E3A8A; width:70px;">Roll No.</th>
+            <th style="padding:7px; border:1px solid #1E3A8A; text-align:left;">Student Name</th>
+            <th style="padding:7px; border:1px solid #1E3A8A; width:100px;">Status (${dateKey})</th>
+            <th style="padding:7px; border:1px solid #1E3A8A; width:130px;">Cumulative Attendance</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml || '<tr><td colspan="4" style="padding:12px; text-align:center; border:1px solid #CBD5E1;">No students in roster.</td></tr>'}
+        </tbody>
+      </table>
+
+      <div style="margin-top:32px; display:flex; justify-content:space-between; font-size:11.5px; color:#334155;">
+        <div>__________________________<br>Signature of Faculty</div>
+        <div style="text-align:right;">__________________________<br>Head of Department</div>
+      </div>
+    </div>
+  `;
+
+  const el = document.getElementById('pdfPrintContainer');
+  el.innerHTML = printHtml;
+  el.style.display = 'block';
+
+  const opt = {
+    margin: 0.35,
+    filename: `ATHENA_Attendance_${curSem.name.replace(/\s+/g, '_')}_${dateKey}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, allowTaint: true },
+    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+  };
+
+  const runExport = () => {
+    html2pdf().set(opt).from(el).save().then(() => {
+      el.style.display = 'none';
+      showToast('Attendance PDF downloaded');
+    });
+  };
+
+  const logoEl = el.querySelector('#pdfAttLogoImg');
+  if (logoEl) {
+    const tmpImg = new Image();
+    tmpImg.onload = function() {
+      try {
+        const cvs = document.createElement('canvas');
+        cvs.width = 160; cvs.height = 160;
+        const ctx = cvs.getContext('2d');
+        ctx.drawImage(tmpImg, 0, 0, 160, 160);
+        logoEl.src = cvs.toDataURL('image/png');
+      } catch (e) {}
+      runExport();
+    };
+    tmpImg.onerror = runExport;
+    tmpImg.src = LOGO_SRC;
+  } else {
+    runExport();
+  }
 }
 
 /* ==========================================================================
@@ -2377,6 +2955,56 @@ function openDrawer(type, preselectDay) {
       <div class="field"><label>Portal / Notice URL</label><input id="dOppLink" placeholder="https://..."></div>
       <div class="field"><label>Required Documents &amp; Notes</label><textarea id="dOppNotes" rows="3" placeholder="e.g., Carry original PhD, GSET, 2 sets of CV &amp; NOC"></textarea></div>
       <button class="btn btn-primary" style="width:100%;" onclick="saveNewOpp()">Save Opportunity</button>
+    `;
+  } else if (type === 'addSemStudent') {
+    titleEl.textContent = 'Add Semester / Subject-Wise Students';
+    const sems = ws.studentSemesters || [];
+    const subs = (ws.subjects || []).filter(s => s.profileId === ws.activeProfileId);
+    bodyEl.innerHTML = `
+      <div class="field"><label>Action</label>
+        <select id="dStuMode" onchange="document.getElementById('dNewSemFields').classList.toggle('hidden', this.value !== 'NEW_SEM'); document.getElementById('dExistingSemWrap').classList.toggle('hidden', this.value === 'NEW_SEM');">
+          <option value="EXISTING">Add Students to Existing Semester</option>
+          <option value="NEW_SEM">Create New Semester &amp; Add Students</option>
+        </select>
+      </div>
+      <div class="field" id="dExistingSemWrap"><label>Select Semester</label>
+        <select id="dStuSemSelect">${sems.map(s => `<option value="${s.id}" ${s.id===activeAttSemId?'selected':''}>${escapeHtml(s.name)}</option>`).join('')}</select>
+      </div>
+      <div id="dNewSemFields" class="hidden">
+        <div class="field"><label>New Semester Name</label><input id="dNewSemName" placeholder="e.g., BA Sem 3 or BA Sem 5"></div>
+        <div class="field"><label>Academic Year Label</label><input id="dNewSemYear" placeholder="e.g., Second Year / Third Year"></div>
+      </div>
+      <div class="field"><label>Assign to Specific Subject (Optional)</label>
+        <select id="dStuSubjSelect">
+          <option value="ALL_SUBJ">All Subjects in This Semester</option>
+          ${subs.map(s => `<option value="${s.id}">${escapeHtml(s.title)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field">
+        <label>Paste Student List (One per line: Roll No. followed by Name)</label>
+        <textarea id="dStuBulkInput" rows="7" placeholder="101 RAJESH KUMAR PATEL&#10;102 PRIYA SHARMA&#10;103 AMIT DESAI"></textarea>
+      </div>
+      <button class="btn btn-primary" style="width:100%;" onclick="saveNewSemOrStudents()">Save Students to Roster</button>
+    `;
+  } else if (type === 'promoteSem') {
+    titleEl.textContent = 'Carry Forward Students to Next Semester';
+    const sems = ws.studentSemesters || [];
+    bodyEl.innerHTML = `
+      <p style="font-size:13px; color:var(--muted); margin-bottom:14px;">Promote an entire class when the semester ends (for example, carrying <strong>BA Sem 2 — First Year</strong> forward into <strong>BA Sem 3 — Second Year</strong>).</p>
+      <div class="field"><label>From Current Semester</label>
+        <select id="dPromoteFrom">${sems.map(s => `<option value="${s.id}" ${s.id===activeAttSemId?'selected':''}>${escapeHtml(s.name)} (${(ws.students||[]).filter(st=>st.semId===s.id).length} students)</option>`).join('')}</select>
+      </div>
+      <div class="field"><label>Carry Forward To</label>
+        <select id="dPromoteTo" onchange="document.getElementById('dPromoteCustomWrap').classList.toggle('hidden', this.value !== '__NEW__')">
+          <option value="__NEW__">+ Create Next Semester (e.g., BA Sem 3 — Second Year)</option>
+          ${sems.map(s => `<option value="${s.id}">${escapeHtml(s.name)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field" id="dPromoteCustomWrap">
+        <label>New Target Semester Name</label>
+        <input id="dPromoteCustomName" value="BA Sem 3 (Second Year)" placeholder="e.g., BA Sem 3 (Second Year)">
+      </div>
+      <button class="btn btn-primary" style="width:100%;" onclick="executeTermCarryForward()">Carry Forward Students Now</button>
     `;
   } else if (type === 'vault') {
     titleEl.textContent = 'Add Resource Vault Link';
