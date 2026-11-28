@@ -762,6 +762,10 @@
         <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><polyline points="16 11 18 13 22 9"/></svg>
         <span class="nav-label">Student Attendance</span>
       </button>
+      <button class="nav-item" data-view="marks" title="Marks Entry (Semester &amp; Subject Wise)" onclick="navigate('marks')">
+        <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        <span class="nav-label">Marks Entry</span>
+      </button>
       <button class="nav-item" data-view="logbook" title="Teaching Logbook &amp; PDF" onclick="navigate('logbook')">
         <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
         <span class="nav-label">Teaching Logbook &amp; PDF</span>
@@ -1021,34 +1025,54 @@
           </div>
         </div>
 
-        <div class="card" style="margin-top:20px;">
+      </section>
+
+      <!-- 3C. SEPARATE MARKS ENTRY TAB (SEMESTER-WISE & SUBJECT-WISE) -->
+      <section id="view-marks" class="view-section hidden">
+        <div class="card card-banner" style="margin-bottom:20px;">
           <div class="card-header">
             <div>
-              <span class="card-title">Internal Marks &amp; Continuous Assessment Sheet</span>
-              <div style="font-size:12px; color:var(--muted);">Enter test, assignment, or tutorial marks for the selected semester &amp; subject before uploading to the university portal.</div>
+              <h2 class="serif" style="font-size:26px;">Semester &amp; Subject Marks Entry</h2>
+              <p style="font-size:13px; color:var(--muted);">Select semester, subject, and assessment type (Unit Test / Internal Exam), set total marks manually, and enter marks per student.</p>
             </div>
-            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-              <label style="font-size:12px; font-weight:600; color:var(--muted);">Max Marks:</label>
-              <input type="number" id="internalMaxMarks" value="30" min="1" max="200" onchange="renderInternalMarksSheet()" style="width:78px !important; padding:5px 8px; font-size:12.5px;">
-              <button type="button" class="btn btn-ghost btn-sm" onclick="downloadInternalMarksCsv()">&#128202; Export Marks CSV</button>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="downloadMarksTabCsv()">&#128202; Export Marks CSV</button>
+              <button type="button" class="btn btn-primary btn-sm" onclick="downloadMarksTabPdf()">&#128196; Download Marks PDF</button>
             </div>
           </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th style="width:72px;">Roll No.</th>
-                  <th>Student Name</th>
-                  <th style="width:92px;">Test / Quiz</th>
-                  <th style="width:98px;">Assignment</th>
-                  <th style="width:92px;">Tutorial</th>
-                  <th style="width:92px;">Att. Bonus</th>
-                  <th style="width:86px;">Total</th>
-                </tr>
-              </thead>
-              <tbody id="internalMarksTableBody"></tbody>
-            </table>
+
+          <div style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap; padding-top:12px; border-top:1px solid var(--border);">
+            <div class="sem-pill-bar" id="marksSemTabs"></div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+              <select id="marksSubjectSelect" onchange="renderMarksEntryTab()" style="width:auto; min-width:190px; padding:7px 10px; font-size:13px;"></select>
+              <select id="marksExamType" onchange="syncMarksOutOfByExamType()" style="width:auto; min-width:155px; padding:7px 10px; font-size:13px; font-weight:600;">
+                <option value="Unit Test">Unit Test</option>
+                <option value="Internal Exam">Internal Exam</option>
+                <option value="Assignment">Assignment</option>
+                <option value="Practical / Viva">Practical / Viva</option>
+              </select>
+              <div style="display:flex; align-items:center; gap:5px;">
+                <label style="font-size:12px; font-weight:700; color:var(--muted); white-space:nowrap;">Out Of:</label>
+                <input type="number" id="marksOutOfInput" value="25" min="1" max="500" step="0.5" onchange="saveMarksOutOf(this.value)" style="width:82px !important; padding:6px 8px; font-size:13px; font-weight:700; text-align:center;">
+              </div>
+            </div>
           </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <span class="card-title" id="marksRosterHeading">Student Marks Sheet</span>
+              <div style="font-size:12px; color:var(--muted);" id="marksRosterStats">Enter marks in the single box beside each student</div>
+            </div>
+            <button type="button" class="btn btn-sm btn-ghost" onclick="clearCurrentMarksSheet()">Reset Marks</button>
+          </div>
+
+          <div style="margin-bottom:12px;">
+            <input type="text" id="marksSearchInput" placeholder="Search by Roll No. or Student Name..." oninput="renderMarksEntryTab()" style="padding:8px 12px; font-size:13px;">
+          </div>
+
+          <div id="marksStudentList"></div>
         </div>
       </section>
 
@@ -1521,6 +1545,7 @@ function renderAll() {
   renderCalendar();
   renderTeaching();
   renderStudentAttendance();
+  renderMarksEntryTab();
   renderLogbook();
   renderResearch();
   renderOpportunities();
@@ -2107,7 +2132,6 @@ function renderStudentAttendance() {
     }).join('');
   }
 
-  renderInternalMarksSheet();
 
   // Summary Box
   const pct = semStudents.length ? Math.round((presentCount / semStudents.length) * 100) : 0;
@@ -2602,16 +2626,85 @@ function confirmAndDeleteStudent(studentId) {
   showToast('Student removed');
 }
 
-function renderInternalMarksSheet() {
-  const tbody = document.getElementById('internalMarksTableBody');
-  if (!tbody || !ws) return;
-  ws.internalMarks = ws.internalMarks || {};
-  const subjId = (document.getElementById('attSubjectSelect') && document.getElementById('attSubjectSelect').value) || 'ALL_SUBJ';
-  const sheetKey = `${activeAttSemId}__${subjId}`;
-  ws.internalMarks[sheetKey] = ws.internalMarks[sheetKey] || {};
-  const marksMap = ws.internalMarks[sheetKey];
+let activeMarksSemId = 'sem_2';
 
-  let semStudents = (ws.students || []).filter(st => st.semId === activeAttSemId);
+function switchMarksSemester(semId) {
+  activeMarksSemId = semId;
+  renderMarksEntryTab();
+}
+
+function getMarksSheetKey() {
+  const subjId = (document.getElementById('marksSubjectSelect') && document.getElementById('marksSubjectSelect').value) || 'ALL_SUBJ';
+  const examType = (document.getElementById('marksExamType') && document.getElementById('marksExamType').value) || 'Unit Test';
+  return `${activeMarksSemId}__${subjId}__${examType}`;
+}
+
+function syncMarksOutOfByExamType() {
+  ws.marksConfig = ws.marksConfig || {};
+  const key = getMarksSheetKey();
+  const outOfInp = document.getElementById('marksOutOfInput');
+  const examType = document.getElementById('marksExamType').value;
+  if (ws.marksConfig[key] !== undefined && outOfInp) {
+    outOfInp.value = ws.marksConfig[key];
+  } else if (outOfInp) {
+    outOfInp.value = examType === 'Internal Exam' ? '50' : examType === 'Unit Test' ? '25' : '20';
+  }
+  renderMarksEntryTab();
+}
+
+function saveMarksOutOf(val) {
+  ws.marksConfig = ws.marksConfig || {};
+  const key = getMarksSheetKey();
+  const num = parseFloat(val);
+  ws.marksConfig[key] = (!isNaN(num) && num > 0) ? num : 25;
+  queueSave();
+  renderMarksEntryTab();
+}
+
+function renderMarksEntryTab() {
+  if (!ws || !ws.studentSemesters) return;
+  if (!ws.studentSemesters.some(s => s.id === activeMarksSemId) && ws.studentSemesters.length > 0) {
+    activeMarksSemId = ws.studentSemesters[0].id;
+  }
+
+  // Render Semester Tabs
+  const tabsEl = document.getElementById('marksSemTabs');
+  if (tabsEl) {
+    tabsEl.innerHTML = ws.studentSemesters.map(sem => {
+      const count = (ws.students || []).filter(st => st.semId === sem.id).length;
+      return `<button type="button" class="sem-tab-btn ${sem.id === activeMarksSemId ? 'active' : ''}" onclick="switchMarksSemester('${sem.id}')">${escapeHtml(sem.name)} <span style="opacity:0.8;font-size:11.5px;">(${count})</span></button>`;
+    }).join('');
+  }
+
+  // Render Subject Dropdown
+  const subjSel = document.getElementById('marksSubjectSelect');
+  const prevSubj = subjSel ? subjSel.value : 'ALL_SUBJ';
+  const activeSubs = (ws.subjects || []).filter(s => s.profileId === ws.activeProfileId);
+  if (subjSel) {
+    subjSel.innerHTML = `<option value="ALL_SUBJ">All Semester Subjects (General)</option>` +
+      activeSubs.map(s => `<option value="${s.id}">${escapeHtml(s.title)} ${s.code ? '('+escapeHtml(s.code)+')' : ''}</option>`).join('');
+    subjSel.value = Array.from(subjSel.options).some(o => o.value === prevSubj) ? prevSubj : 'ALL_SUBJ';
+  }
+
+  const sheetKey = getMarksSheetKey();
+  ws.marksEntries = ws.marksEntries || {};
+  ws.marksEntries[sheetKey] = ws.marksEntries[sheetKey] || {};
+  const entries = ws.marksEntries[sheetKey];
+
+  ws.marksConfig = ws.marksConfig || {};
+  const outOfInp = document.getElementById('marksOutOfInput');
+  const examType = (document.getElementById('marksExamType') && document.getElementById('marksExamType').value) || 'Unit Test';
+  if (outOfInp) {
+    if (ws.marksConfig[sheetKey] !== undefined) {
+      outOfInp.value = ws.marksConfig[sheetKey];
+    } else if (document.activeElement !== outOfInp) {
+      outOfInp.value = examType === 'Internal Exam' ? '50' : examType === 'Unit Test' ? '25' : '20';
+    }
+  }
+  const maxMarks = parseFloat(outOfInp && outOfInp.value) || 25;
+
+  const subjId = subjSel ? subjSel.value : 'ALL_SUBJ';
+  let semStudents = (ws.students || []).filter(st => st.semId === activeMarksSemId);
   if (subjId !== 'ALL_SUBJ') {
     const enrolledSpecific = semStudents.filter(st => Array.isArray(st.subjectIds) && st.subjectIds.length > 0);
     if (enrolledSpecific.length > 0) {
@@ -2620,59 +2713,231 @@ function renderInternalMarksSheet() {
   }
   semStudents.sort((a, b) => (parseInt(a.roll, 10) || 9999) - (parseInt(b.roll, 10) || 9999));
 
-  if (semStudents.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--muted); padding:16px;">No students in this semester/subject filter.</td></tr>`;
+  const searchQ = (document.getElementById('marksSearchInput')?.value || '').trim().toLowerCase();
+  const visibleStudents = searchQ
+    ? semStudents.filter(st => st.roll.toLowerCase().includes(searchQ) || st.name.toLowerCase().includes(searchQ))
+    : semStudents;
+
+  const curSemObj = ws.studentSemesters.find(s => s.id === activeMarksSemId) || { name: 'Semester' };
+  const subObj = activeSubs.find(s => s.id === subjId);
+  const subLabel = subObj ? subObj.title : 'All Subjects';
+
+  let enteredCount = 0, sumMarks = 0;
+  semStudents.forEach(st => {
+    const raw = entries[st.id];
+    if (raw !== undefined && raw !== '') {
+      const n = parseFloat(raw);
+      if (!isNaN(n)) {
+        enteredCount++;
+        sumMarks += n;
+      }
+    }
+  });
+  const avgVal = enteredCount > 0 ? (sumMarks / enteredCount).toFixed(1) : '0.0';
+
+  document.getElementById('marksRosterHeading').textContent = `${curSemObj.name} • ${subLabel} (${examType})`;
+  document.getElementById('marksRosterStats').textContent = `Out of ${maxMarks} Marks • Entered: ${enteredCount}/${semStudents.length} • Class Avg: ${avgVal}`;
+
+  const listEl = document.getElementById('marksStudentList');
+  if (!listEl) return;
+
+  if (visibleStudents.length === 0) {
+    listEl.innerHTML = `<div style="text-align:center; padding:24px 12px; color:var(--muted);">No students found for <strong>${escapeHtml(curSemObj.name)}</strong>.</div>`;
     return;
   }
 
-  tbody.innerHTML = semStudents.map(st => {
-    const m = marksMap[st.id] || { test: '', assign: '', tut: '', att: '' };
-    const total = (parseFloat(m.test) || 0) + (parseFloat(m.assign) || 0) + (parseFloat(m.tut) || 0) + (parseFloat(m.att) || 0);
+  listEl.innerHTML = visibleStudents.map(st => {
+    const val = entries[st.id] !== undefined ? entries[st.id] : '';
     return `
-      <tr>
-        <td><strong>${escapeHtml(st.roll)}</strong></td>
-        <td style="font-weight:600;">${escapeHtml(st.name)}</td>
-        <td><input type="number" step="0.5" min="0" class="marks-input" value="${escapeHtml(m.test)}" onchange="updateInternalMark('${sheetKey}','${st.id}','test',this.value)"></td>
-        <td><input type="number" step="0.5" min="0" class="marks-input" value="${escapeHtml(m.assign)}" onchange="updateInternalMark('${sheetKey}','${st.id}','assign',this.value)"></td>
-        <td><input type="number" step="0.5" min="0" class="marks-input" value="${escapeHtml(m.tut)}" onchange="updateInternalMark('${sheetKey}','${st.id}','tut',this.value)"></td>
-        <td><input type="number" step="0.5" min="0" class="marks-input" value="${escapeHtml(m.att)}" onchange="updateInternalMark('${sheetKey}','${st.id}','att',this.value)"></td>
-        <td><span class="badge b-accent" style="font-size:12.5px;">${total}</span></td>
-      </tr>
+      <div class="stu-row" style="cursor:default;">
+        <div style="display:flex; align-items:center; gap:11px; min-width:0; flex:1;">
+          <span class="stu-roll">${escapeHtml(st.roll)}</span>
+          <div style="font-weight:600; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(st.name)}</div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+          <input type="number" step="0.5" min="0" max="${maxMarks}" value="${escapeHtml(val)}"
+            placeholder="Marks"
+            onchange="saveSingleStudentMark('${sheetKey}', '${st.id}', this.value, ${maxMarks})"
+            style="width:92px !important; padding:7px 10px; font-size:13px; font-weight:700; text-align:center;">
+          <span style="font-size:12px; color:var(--muted); min-width:44px;">/ ${maxMarks}</span>
+        </div>
+      </div>
     `;
   }).join('');
 }
 
-function updateInternalMark(sheetKey, stuId, field, val) {
-  ws.internalMarks = ws.internalMarks || {};
-  ws.internalMarks[sheetKey] = ws.internalMarks[sheetKey] || {};
-  ws.internalMarks[sheetKey][stuId] = ws.internalMarks[sheetKey][stuId] || { test: '', assign: '', tut: '', att: '' };
-  ws.internalMarks[sheetKey][stuId][field] = val;
+function saveSingleStudentMark(sheetKey, stuId, rawVal, maxMarks) {
+  ws.marksEntries = ws.marksEntries || {};
+  ws.marksEntries[sheetKey] = ws.marksEntries[sheetKey] || {};
+  const trimmed = String(rawVal).trim();
+  if (trimmed === '') {
+    delete ws.marksEntries[sheetKey][stuId];
+  } else {
+    let num = parseFloat(trimmed);
+    if (isNaN(num)) return;
+    if (num < 0) num = 0;
+    if (num > maxMarks) {
+      showToast(`Capped at max marks (${maxMarks})`);
+      num = maxMarks;
+    }
+    ws.marksEntries[sheetKey][stuId] = String(num);
+  }
   queueSave();
-  renderInternalMarksSheet();
+  renderMarksEntryTab();
 }
 
-function downloadInternalMarksCsv() {
-  const curSem = ws.studentSemesters.find(s => s.id === activeAttSemId) || { name: 'Semester' };
-  const subjId = (document.getElementById('attSubjectSelect') && document.getElementById('attSubjectSelect').value) || 'ALL_SUBJ';
-  const sheetKey = `${activeAttSemId}__${subjId}`;
-  const marksMap = (ws.internalMarks || {})[sheetKey] || {};
+function clearCurrentMarksSheet() {
+  if (!confirm('Clear all entered marks for this semester, subject, and test?')) return;
+  const sheetKey = getMarksSheetKey();
+  if (ws.marksEntries && ws.marksEntries[sheetKey]) {
+    delete ws.marksEntries[sheetKey];
+  }
+  queueSave();
+  renderMarksEntryTab();
+  showToast('Cleared marks sheet');
+}
 
-  let semStudents = (ws.students || []).filter(st => st.semId === activeAttSemId)
-    .sort((a, b) => (parseInt(a.roll, 10) || 9999) - (parseInt(b.roll, 10) || 9999));
+function downloadMarksTabCsv() {
+  const curSem = ws.studentSemesters.find(s => s.id === activeMarksSemId) || { name: 'Semester' };
+  const subjId = (document.getElementById('marksSubjectSelect') && document.getElementById('marksSubjectSelect').value) || 'ALL_SUBJ';
+  const examType = (document.getElementById('marksExamType') && document.getElementById('marksExamType').value) || 'Unit Test';
+  const maxMarks = parseFloat(document.getElementById('marksOutOfInput')?.value) || 25;
+  const sheetKey = getMarksSheetKey();
+  const entries = (ws.marksEntries || {})[sheetKey] || {};
 
-  const lines = ['"Roll No","Student Name","Test / Quiz","Assignment","Tutorial","Attendance Bonus","Total Marks"'];
+  let semStudents = (ws.students || []).filter(st => st.semId === activeMarksSemId);
+  if (subjId !== 'ALL_SUBJ') {
+    const enrolledSpecific = semStudents.filter(st => Array.isArray(st.subjectIds) && st.subjectIds.length > 0);
+    if (enrolledSpecific.length > 0) {
+      semStudents = semStudents.filter(st => Array.isArray(st.subjectIds) && st.subjectIds.includes(subjId));
+    }
+  }
+  semStudents.sort((a, b) => (parseInt(a.roll, 10) || 9999) - (parseInt(b.roll, 10) || 9999));
+
+  const lines = [`"Roll No","Student Name","Semester","Assessment","Marks Obtained","Out Of"`];
   semStudents.forEach(st => {
-    const m = marksMap[st.id] || { test: '', assign: '', tut: '', att: '' };
-    const total = (parseFloat(m.test) || 0) + (parseFloat(m.assign) || 0) + (parseFloat(m.tut) || 0) + (parseFloat(m.att) || 0);
-    lines.push(`"${st.roll}","${st.name.replace(/"/g, '""')}","${m.test || 0}","${m.assign || 0}","${m.tut || 0}","${m.att || 0}","${total}"`);
+    const val = entries[st.id] !== undefined && entries[st.id] !== '' ? entries[st.id] : '-';
+    lines.push(`"${st.roll}","${st.name.replace(/"/g, '""')}","${curSem.name}","${examType}","${val}","${maxMarks}"`);
   });
 
   const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `ATHENA_Internal_Marks_${curSem.name.replace(/\s+/g, '_')}.csv`;
+  a.download = `ATHENA_Marks_${curSem.name.replace(/\s+/g, '_')}_${examType.replace(/\s+/g, '_')}.csv`;
   a.click();
-  showToast('Internal marks CSV downloaded');
+  showToast('Marks CSV downloaded');
+}
+
+function downloadMarksTabPdf() {
+  const curSem = ws.studentSemesters.find(s => s.id === activeMarksSemId) || { name: 'Semester' };
+  const subjId = (document.getElementById('marksSubjectSelect') && document.getElementById('marksSubjectSelect').value) || 'ALL_SUBJ';
+  const examType = (document.getElementById('marksExamType') && document.getElementById('marksExamType').value) || 'Unit Test';
+  const maxMarks = parseFloat(document.getElementById('marksOutOfInput')?.value) || 25;
+  const subObj = (ws.subjects || []).find(x => x.id === subjId);
+  const subTitle = subObj ? `${subObj.title} ${subObj.code ? '(' + subObj.code + ')' : ''}` : 'All Subjects';
+  const profile = ws.profiles.find(p => p.id === ws.activeProfileId) || { name: 'Current Term', institution: session.user.institution };
+
+  const sheetKey = getMarksSheetKey();
+  const entries = (ws.marksEntries || {})[sheetKey] || {};
+
+  let semStudents = (ws.students || []).filter(st => st.semId === activeMarksSemId);
+  if (subjId !== 'ALL_SUBJ') {
+    const enrolledSpecific = semStudents.filter(st => Array.isArray(st.subjectIds) && st.subjectIds.length > 0);
+    if (enrolledSpecific.length > 0) {
+      semStudents = semStudents.filter(st => Array.isArray(st.subjectIds) && st.subjectIds.includes(subjId));
+    }
+  }
+  semStudents.sort((a, b) => (parseInt(a.roll, 10) || 9999) - (parseInt(b.roll, 10) || 9999));
+
+  const rowsHtml = semStudents.map(st => {
+    const raw = entries[st.id];
+    const display = (raw !== undefined && raw !== '') ? `${escapeHtml(raw)} / ${maxMarks}` : '-';
+    return `
+      <tr>
+        <td style="padding:6px 8px; border:1px solid #CBD5E1; font-weight:700; text-align:center;">${escapeHtml(st.roll)}</td>
+        <td style="padding:6px 8px; border:1px solid #CBD5E1;">${escapeHtml(st.name)}</td>
+        <td style="padding:6px 8px; border:1px solid #CBD5E1; text-align:center; font-weight:700;">${display}</td>
+      </tr>
+    `;
+  }).join('');
+
+  const printHtml = `
+    <div style="font-family: 'Inter', Arial, sans-serif; color:#0F172A; padding:22px;">
+      <div style="border-bottom:2px solid #1E3A8A; padding-bottom:12px; margin-bottom:14px; display:flex; justify-content:space-between; align-items:flex-end;">
+        <div>
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+            <img id="pdfMarksLogoImg" src="${LOGO_SRC}" width="36" height="36" style="width:36px; height:36px; border-radius:8px; display:block;">
+            <div>
+              <div style="font-family: 'Cinzel', Georgia, serif; font-size:20px; font-weight:800; letter-spacing:3px; text-transform:uppercase; color:#1E3A8A; line-height:1.05;">ATHENA</div>
+              <div style="display:inline-block; font-size:8.5px; font-weight:700; letter-spacing:1.4px; text-transform:uppercase; color:#475569; margin-top:2px; padding-top:2px; border-top:1px solid #CBD5E1;">Marks Entry Sheet</div>
+            </div>
+          </div>
+          <div style="font-size:15px; font-weight:700;">${escapeHtml(curSem.name)} &mdash; ${escapeHtml(subTitle)}</div>
+          <div style="font-size:11.5px; color:#475569;">${escapeHtml(examType)} (Max Marks: ${maxMarks}) &bull; ${escapeHtml(session.user.name)}</div>
+        </div>
+        <div style="text-align:right; font-size:11.5px; color:#475569;">
+          <div>${escapeHtml(profile.institution || session.user.institution || '')}</div>
+          <div>Generated: ${formatDateKey(new Date())}</div>
+        </div>
+      </div>
+
+      <table style="width:100%; border-collapse:collapse; font-size:11px;">
+        <thead>
+          <tr style="background:#1E3A8A; color:#FFFFFF;">
+            <th style="padding:7px; border:1px solid #1E3A8A; width:72px;">Roll No.</th>
+            <th style="padding:7px; border:1px solid #1E3A8A; text-align:left;">Student Name</th>
+            <th style="padding:7px; border:1px solid #1E3A8A; width:120px;">Marks (Out of ${maxMarks})</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml || '<tr><td colspan="3" style="padding:12px; text-align:center; border:1px solid #CBD5E1;">No students in roster.</td></tr>'}
+        </tbody>
+      </table>
+
+      <div style="margin-top:32px; display:flex; justify-content:space-between; font-size:11.5px; color:#334155;">
+        <div>__________________________<br>Signature of Faculty</div>
+        <div style="text-align:right;">__________________________<br>Head of Department</div>
+      </div>
+    </div>
+  `;
+
+  const el = document.getElementById('pdfPrintContainer');
+  el.innerHTML = printHtml;
+  el.style.display = 'block';
+
+  const opt = {
+    margin: 0.35,
+    filename: `ATHENA_Marks_${curSem.name.replace(/\s+/g, '_')}_${examType.replace(/\s+/g, '_')}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, allowTaint: true },
+    jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+  };
+
+  const runExport = () => {
+    html2pdf().set(opt).from(el).save().then(() => {
+      el.style.display = 'none';
+      showToast('Marks PDF downloaded');
+    });
+  };
+
+  const logoEl = el.querySelector('#pdfMarksLogoImg');
+  if (logoEl) {
+    const tmpImg = new Image();
+    tmpImg.onload = function() {
+      try {
+        const cvs = document.createElement('canvas');
+        cvs.width = 160; cvs.height = 160;
+        const ctx = cvs.getContext('2d');
+        ctx.drawImage(tmpImg, 0, 0, 160, 160);
+        logoEl.src = cvs.toDataURL('image/png');
+      } catch (e) {}
+      runExport();
+    };
+    tmpImg.onerror = runExport;
+    tmpImg.src = LOGO_SRC;
+  } else {
+    runExport();
+  }
 }
 
 /* ==========================================================================
