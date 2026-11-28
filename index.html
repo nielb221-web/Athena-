@@ -1250,13 +1250,22 @@ function normalizeWorkspace(data) {
     { id: 'sem_4', name: 'BA Sem 4', yearLabel: 'Second Year', nextSemId: 'sem_5' },
     { id: 'sem_6', name: 'BA Sem 6', yearLabel: 'Third Year', nextSemId: '' }
   ];
-  if (!data.students || data.students.length === 0) {
-    const s2 = [{"roll": "108", "name": "AMARKUMAR RANJITBHAI KOKANI"}, {"roll": "109", "name": "ANAM BASIT PATEL"}, {"roll": "110", "name": "CHAITALIBEN SURESHBHAI VANSFODA"}, {"roll": "111", "name": "DIMPALBEN SACHINBHAI RANDHIR"}, {"roll": "112", "name": "DIPAK ISHWARBHAI MAKWANA"}, {"roll": "113", "name": "GOLDI MUKESH PANDE"}, {"roll": "114", "name": "GULALE PURNAYU DINESHBHAI"}, {"roll": "115", "name": "JIDNYASA ANIL SALI"}, {"roll": "117", "name": "MADHURI PRAVIN PATIL"}, {"roll": "118", "name": "MAHESHWARI SHREECHAND GUPTA"}, {"roll": "119", "name": "MAKWANA BINALKUMARI MAHESHBHAI"}, {"roll": "120", "name": "MAYUR SAGARBHAI RATHOD"}, {"roll": "121", "name": "MAYVISH SHAKIL AHEMAD PATEL"}, {"roll": "122", "name": "NEHA DILIP PATIL"}, {"roll": "124", "name": "POONAM DNYANESHWAR JANJALKAR"}, {"roll": "125", "name": "PRATIBHA SAHEBRAO RAJPUT"}, {"roll": "126", "name": "PRIYANKA BHASKAR SHIRSATH"}, {"roll": "127", "name": "PRIYANSHIBEN KISHORBHAI GAMIT"}, {"roll": "128", "name": "RUPA DHARMENDRAKUMAR HARJAN"}, {"roll": "130", "name": "SHREY NILESHBHAI GAMIT"}, {"roll": "131", "name": "SHRUTIKKUMAR NILESHBHAI GAMIT"}, {"roll": "132", "name": "SVINALBEN SURESHBHAI GAMIT"}, {"roll": "133", "name": "YASH VIJAY KOLI"}, {"roll": "213", "name": "PATEL HARPITA MAHENDRABHAI"}, {"roll": "214", "name": "KOMAL CHITTARANJAN NAYAK"}, {"roll": "215", "name": "JAVIDKHAN AMJADKHAN PATHAN"}, {"roll": "232", "name": "AKSA NAAZ ZAKIR SHAIKH"}];
-    const s4 = [{"roll": "39", "name": "CHAUDHARI JAYKUMAR MANSUKHBHAI"}, {"roll": "40", "name": "GUPTA MEET SHREECHANDKUMAR"}, {"roll": "41", "name": "KANOJIYA HANSA VIJAYPRAKASH"}, {"roll": "42", "name": "KHAIRNAR RAHUL JANKIRAM"}, {"roll": "44", "name": "Patel Fayzabanu Aarif"}, {"roll": "45", "name": "Patel Sabihabanu Molvi Yusuf"}, {"roll": "46", "name": "Shaikh Sagufta Salam"}, {"roll": "47", "name": "TAMKHANE UNNATI BHATUBHAI"}, {"roll": "48", "name": "VASAVA AYUSHIBEN MUKESHBHAI"}, {"roll": "49", "name": "VASAVA HARSHADBHAI ISHWARBHAI"}, {"roll": "50", "name": "VASAVA PRIYALKUMARI BAHADURBHAI"}];
+  data.students = data.students || [];
+  const s2 = [{"roll": "108", "name": "AMARKUMAR RANJITBHAI KOKANI"}, {"roll": "109", "name": "ANAM BASIT PATEL"}, {"roll": "110", "name": "CHAITALIBEN SURESHBHAI VANSFODA"}, {"roll": "111", "name": "DIMPALBEN SACHINBHAI RANDHIR"}, {"roll": "112", "name": "DIPAK ISHWARBHAI MAKWANA"}, {"roll": "113", "name": "GOLDI MUKESH PANDE"}, {"roll": "114", "name": "GULALE PURNAYU DINESHBHAI"}, {"roll": "115", "name": "JIDNYASA ANIL SALI"}, {"roll": "117", "name": "MADHURI PRAVIN PATIL"}, {"roll": "118", "name": "MAHESHWARI SHREECHAND GUPTA"}, {"roll": "119", "name": "MAKWANA BINALKUMARI MAHESHBHAI"}, {"roll": "120", "name": "MAYUR SAGARBHAI RATHOD"}, {"roll": "121", "name": "MAYVISH SHAKIL AHEMAD PATEL"}, {"roll": "122", "name": "NEHA DILIP PATIL"}, {"roll": "124", "name": "POONAM DNYANESHWAR JANJALKAR"}, {"roll": "125", "name": "PRATIBHA SAHEBRAO RAJPUT"}, {"roll": "126", "name": "PRIYANKA BHASKAR SHIRSATH"}, {"roll": "127", "name": "PRIYANSHIBEN KISHORBHAI GAMIT"}, {"roll": "128", "name": "RUPA DHARMENDRAKUMAR HARJAN"}, {"roll": "130", "name": "SHREY NILESHBHAI GAMIT"}, {"roll": "131", "name": "SHRUTIKKUMAR NILESHBHAI GAMIT"}, {"roll": "132", "name": "SVINALBEN SURESHBHAI GAMIT"}, {"roll": "133", "name": "YASH VIJAY KOLI"}, {"roll": "213", "name": "PATEL HARPITA MAHENDRABHAI"}, {"roll": "214", "name": "KOMAL CHITTARANJAN NAYAK"}, {"roll": "215", "name": "JAVIDKHAN AMJADKHAN PATHAN"}, {"roll": "232", "name": "AKSA NAAZ ZAKIR SHAIKH"}];
+  const s4 = [{"roll": "39", "name": "CHAUDHARI JAYKUMAR MANSUKHBHAI"}, {"roll": "40", "name": "GUPTA MEET SHREECHANDKUMAR"}, {"roll": "41", "name": "KANOJIYA HANSA VIJAYPRAKASH"}, {"roll": "42", "name": "KHAIRNAR RAHUL JANKIRAM"}, {"roll": "44", "name": "Patel Fayzabanu Aarif"}, {"roll": "45", "name": "Patel Sabihabanu Molvi Yusuf"}, {"roll": "46", "name": "Shaikh Sagufta Salam"}, {"roll": "47", "name": "TAMKHANE UNNATI BHATUBHAI"}, {"roll": "48", "name": "VASAVA AYUSHIBEN MUKESHBHAI"}, {"roll": "49", "name": "VASAVA HARSHADBHAI ISHWARBHAI"}, {"roll": "50", "name": "VASAVA PRIYALKUMARI BAHADURBHAI"}];
+  if (data.students.length === 0) {
     data.students = [
       ...s2.map((st, idx) => ({ id: 'stu_s2_' + st.roll + '_' + idx, semId: 'sem_2', roll: st.roll, name: st.name, subjectIds: [] })),
       ...s4.map((st, idx) => ({ id: 'stu_s4_' + st.roll + '_' + idx, semId: 'sem_4', roll: st.roll, name: st.name, subjectIds: [] }))
     ];
+  } else {
+    // Restore any missing BA Sem 4 students if accidentally deleted
+    const existingS4Rolls = new Set(data.students.filter(st => st.semId === 'sem_4').map(st => String(st.roll).trim()));
+    s4.forEach((st, idx) => {
+      if (!existingS4Rolls.has(String(st.roll).trim())) {
+        data.students.push({ id: 'stu_s4_' + st.roll + '_' + idx, semId: 'sem_4', roll: st.roll, name: st.name, subjectIds: [] });
+      }
+    });
   }
   data.studentAttendance = data.studentAttendance || {};
 
@@ -1989,7 +1998,6 @@ function renderStudentAttendance() {
           </div>
           <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
             <span class="stu-tap-badge ${badgeCls}">${badgeTxt}</span>
-            <button type="button" class="btn btn-sm btn-danger" style="padding:3px 7px;" title="Remove student" onclick="event.stopPropagation(); deleteStudent('${st.id}')">&times;</button>
           </div>
         </div>
       `;
