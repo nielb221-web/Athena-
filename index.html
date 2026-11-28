@@ -468,6 +468,36 @@
   .stu-tap-badge.absent { background: var(--crimson); color: #fff; }
   .stu-tap-badge.unmarked { background: var(--surface-3); color: var(--muted); }
 
+  /* Sub-75% Watchlist & Internal Marks Calculator */
+  .stu-row.low-att-warn {
+    border-right: 4px solid var(--crimson);
+  }
+  .pct-pill {
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .pct-good { background: var(--emerald-soft); color: var(--emerald); }
+  .pct-low { background: var(--crimson-soft); color: var(--crimson); }
+  .marks-input {
+    width: 68px !important;
+    padding: 5px 7px !important;
+    font-size: 12.5px !important;
+    text-align: center;
+  }
+  .unit-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    background: var(--surface-2);
+    margin-bottom: 5px;
+    font-size: 12px;
+  }
+
   /* Rich Lecture Slot Card on Today View */
   .lecture-card {
     background: var(--surface);
@@ -949,8 +979,10 @@
               </div>
             </div>
 
-            <div style="margin-bottom:12px;">
-              <input type="text" id="attSearchInput" placeholder="Search by Roll No. or Student Name..." oninput="renderStudentAttendance()" style="padding:8px 12px; font-size:13px;">
+            <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px;">
+              <input type="text" id="attSearchInput" placeholder="Search by Roll No. or Student Name..." oninput="renderStudentAttendance()" style="flex:1; min-width:180px; padding:8px 12px; font-size:13px;">
+              <button type="button" class="btn btn-sm btn-ghost" id="btnLowAttFilter" onclick="toggleLowAttFilter()">&#9888; Below 75% Watchlist</button>
+              <button type="button" class="btn btn-sm btn-ghost" onclick="syncPresentCountToTodayLecture()" title="Copy today's present count into matching Today lecture headcount">&#8635; Sync Present to Today Log</button>
             </div>
 
             <div id="studentRosterList"></div>
@@ -986,6 +1018,36 @@
               </div>
               <div id="attRecentLogsList"></div>
             </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:20px;">
+          <div class="card-header">
+            <div>
+              <span class="card-title">Internal Marks &amp; Continuous Assessment Sheet</span>
+              <div style="font-size:12px; color:var(--muted);">Enter test, assignment, or tutorial marks for the selected semester &amp; subject before uploading to the university portal.</div>
+            </div>
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+              <label style="font-size:12px; font-weight:600; color:var(--muted);">Max Marks:</label>
+              <input type="number" id="internalMaxMarks" value="30" min="1" max="200" onchange="renderInternalMarksSheet()" style="width:78px !important; padding:5px 8px; font-size:12.5px;">
+              <button type="button" class="btn btn-ghost btn-sm" onclick="downloadInternalMarksCsv()">&#128202; Export Marks CSV</button>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:72px;">Roll No.</th>
+                  <th>Student Name</th>
+                  <th style="width:92px;">Test / Quiz</th>
+                  <th style="width:98px;">Assignment</th>
+                  <th style="width:92px;">Tutorial</th>
+                  <th style="width:92px;">Att. Bonus</th>
+                  <th style="width:86px;">Total</th>
+                </tr>
+              </thead>
+              <tbody id="internalMarksTableBody"></tbody>
+            </table>
           </div>
         </div>
       </section>
@@ -1883,13 +1945,19 @@ function renderTeaching() {
             </div>
             <div class="prog-track"><div class="prog-fill" style="width:${pct}%; background:${s.color || 'var(--accent)'}"></div></div>
           </div>
-          <div style="margin-top:10px; max-height:120px; overflow-y:auto;">
-            ${units.map((u, i) => `
-              <label style="display:flex; align-items:center; gap:6px; font-size:12px; padding:3px 0; cursor:pointer; color:${u.done?'var(--muted)':'var(--ink)'}">
-                <input type="checkbox" style="width:auto;" ${u.done?'checked':''} onchange="toggleSyllabusUnit('${s.id}', ${i})">
-                <span style="text-decoration:${u.done?'line-through':'none'}">${escapeHtml(u.title)}</span>
-              </label>
-            `).join('')}
+          <div style="margin-top:10px; max-height:135px; overflow-y:auto;">
+            ${units.length === 0
+              ? `<div style="font-size:11.5px; color:var(--muted); padding:4px 0;">Syllabus units not added yet — add units anytime or edit subject.</div>`
+              : units.map((u, i) => `
+                <div class="unit-status-row">
+                  <label style="display:flex; align-items:center; gap:6px; font-size:12px; cursor:pointer; color:${u.done?'var(--muted)':'var(--ink)'}; margin:0;">
+                    <input type="checkbox" style="width:auto;" ${u.done?'checked':''} onchange="toggleSyllabusUnit('${s.id}', ${i})">
+                    <span style="text-decoration:${u.done?'line-through':'none'}">${escapeHtml(u.title)}</span>
+                  </label>
+                  <span class="badge ${u.done ? 'b-emerald' : 'b-neutral'}" style="font-size:10px; padding:2px 6px;">${u.done ? 'Taught' : 'Pending'}</span>
+                </div>
+              `).join('')
+            }
           </div>
         </div>
       `;
@@ -1974,15 +2042,43 @@ function renderStudentAttendance() {
   document.getElementById('attRosterHeading').textContent = `${curSemObj.name} — ${dateKey}`;
   document.getElementById('attRosterStats').textContent = `Total: ${semStudents.length} • Present: ${presentCount} • Absent: ${absentCount} • Unmarked: ${semStudents.length - presentCount - absentCount}`;
 
-  const visibleStudents = searchQ
+  const allSemSessions = Object.entries(ws.studentAttendance || {}).filter(([k, rec]) => {
+    const [, semPart, sPart] = k.split('__');
+    if (semPart !== activeAttSemId) return false;
+    if (subjId !== 'ALL_SUBJ' && sPart !== subjId) return false;
+    return rec && Object.keys(rec).length > 0;
+  });
+
+  const computeStuCumPct = (stuId) => {
+    let pC = 0, tot = 0;
+    allSemSessions.forEach(([, rec]) => {
+      if (rec[stuId] === 'P') { pC++; tot++; }
+      else if (rec[stuId] === 'A') { tot++; }
+    });
+    return { pC, tot, pct: tot > 0 ? Math.round((pC / tot) * 100) : null };
+  };
+
+  let visibleStudents = searchQ
     ? semStudents.filter(st => st.roll.toLowerCase().includes(searchQ) || st.name.toLowerCase().includes(searchQ))
     : semStudents;
+
+  if (onlyLowAtt) {
+    visibleStudents = visibleStudents.filter(st => {
+      const info = computeStuCumPct(st.id);
+      return info.pct !== null && info.pct < 75;
+    });
+  }
+
+  const lowFilterBtn = document.getElementById('btnLowAttFilter');
+  if (lowFilterBtn) {
+    lowFilterBtn.className = onlyLowAtt ? 'btn btn-sm btn-danger' : 'btn btn-sm btn-ghost';
+  }
 
   const listEl = document.getElementById('studentRosterList');
   if (visibleStudents.length === 0) {
     listEl.innerHTML = `<div style="text-align:center; padding:24px 12px; color:var(--muted);">
-      <p style="font-size:13.5px; margin-bottom:10px;">No students listed under <strong>${escapeHtml(curSemObj.name)}</strong> yet.</p>
-      <button class="btn btn-primary btn-sm" onclick="openDrawer('addSemStudent')">+ Add Students to ${escapeHtml(curSemObj.name)}</button>
+      <p style="font-size:13.5px; margin-bottom:10px;">${onlyLowAtt ? 'No students below 75% attendance in this semester.' : 'No students listed under <strong>' + escapeHtml(curSemObj.name) + '</strong> yet.'}</p>
+      ${onlyLowAtt ? '' : `<button class="btn btn-primary btn-sm" onclick="openDrawer('addSemStudent')">+ Add Students to ${escapeHtml(curSemObj.name)}</button>`}
     </div>`;
   } else {
     listEl.innerHTML = visibleStudents.map(st => {
@@ -1990,19 +2086,28 @@ function renderStudentAttendance() {
       const rowCls = state === 'P' ? 'is-present' : state === 'A' ? 'is-absent' : '';
       const badgeCls = state === 'P' ? 'present' : state === 'A' ? 'absent' : 'unmarked';
       const badgeTxt = state === 'P' ? 'PRESENT' : state === 'A' ? 'ABSENT' : 'TAP TO MARK';
+      const cum = computeStuCumPct(st.id);
+      const isLow = cum.pct !== null && cum.pct < 75;
+      const pctBadge = cum.pct !== null
+        ? `<span class="pct-pill ${isLow ? 'pct-low' : 'pct-good'}" title="${cum.pC}/${cum.tot} sessions">${cum.pct}%</span>`
+        : '';
       return `
-        <div class="stu-row ${rowCls}" onclick="toggleStudentAtt('${st.id}')">
+        <div class="stu-row ${rowCls} ${isLow ? 'low-att-warn' : ''}" onclick="toggleStudentAtt('${st.id}')">
           <div style="display:flex; align-items:center; gap:11px; min-width:0;">
             <span class="stu-roll">${escapeHtml(st.roll)}</span>
             <div style="font-weight:600; font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(st.name)}</div>
+            ${pctBadge}
           </div>
-          <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+          <div style="display:flex; align-items:center; gap:7px; flex-shrink:0;">
             <span class="stu-tap-badge ${badgeCls}">${badgeTxt}</span>
+            <button type="button" class="btn btn-sm btn-ghost" style="padding:4px 8px; font-size:11px;" title="Edit student details" onclick="event.stopPropagation(); openEditStudentDrawer('${st.id}')">Edit</button>
           </div>
         </div>
       `;
     }).join('');
   }
+
+  renderInternalMarksSheet();
 
   // Summary Box
   const pct = semStudents.length ? Math.round((presentCount / semStudents.length) * 100) : 0;
@@ -2406,6 +2511,169 @@ function downloadStudentAttendancePdf() {
   } else {
     runExport();
   }
+}
+
+
+let onlyLowAtt = false;
+
+function toggleLowAttFilter() {
+  onlyLowAtt = !onlyLowAtt;
+  renderStudentAttendance();
+}
+
+function syncPresentCountToTodayLecture() {
+  const dateKey = (document.getElementById('attDatePicker') && document.getElementById('attDatePicker').value) || formatDateKey(new Date());
+  const subjId = (document.getElementById('attSubjectSelect') && document.getElementById('attSubjectSelect').value) || 'ALL_SUBJ';
+  const sessionKey = `${dateKey}__${activeAttSemId}__${subjId}`;
+  const sessionRecord = (ws.studentAttendance || {})[sessionKey] || {};
+  const presentCount = Object.values(sessionRecord).filter(v => v === 'P').length;
+
+  const rec = ensureDayRec(dateKey);
+  const dObj = new Date(dateKey + 'T00:00:00');
+  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const dayName = dayNames[dObj.getDay()];
+  const daySlots = (ws.timetable || []).filter(s => s.profileId === ws.activeProfileId && s.day === dayName);
+
+  if (daySlots.length === 0) {
+    showToast(`Present count is ${presentCount} (no timetable slot on ${dayName} to auto-fill)`);
+    return;
+  }
+
+  let matchedSlot = daySlots[0];
+  if (subjId !== 'ALL_SUBJ') {
+    const bySubj = daySlots.find(s => s.subjectId === subjId);
+    if (bySubj) matchedSlot = bySubj;
+  }
+
+  rec.attendance[matchedSlot.id] = String(presentCount);
+  if (!rec.logs[matchedSlot.id] && presentCount > 0) {
+    rec.logs[matchedSlot.id] = 'delivered';
+  }
+  queueSave();
+  renderToday();
+  showToast(`Synced ${presentCount} present students to Today's lecture log`);
+}
+
+function openEditStudentDrawer(studentId) {
+  const st = (ws.students || []).find(x => x.id === studentId);
+  if (!st) return;
+  const sems = ws.studentSemesters || [];
+  document.getElementById('drawerTitle').textContent = 'Edit Student Record';
+  document.getElementById('drawerBody').innerHTML = `
+    <div class="field"><label>Roll No.</label><input type="text" id="dEditStuRoll" value="${escapeHtml(st.roll)}"></div>
+    <div class="field"><label>Student Full Name</label><input type="text" id="dEditStuName" value="${escapeHtml(st.name)}"></div>
+    <div class="field"><label>Semester</label>
+      <select id="dEditStuSem">${sems.map(s => `<option value="${s.id}" ${s.id===st.semId?'selected':''}>${escapeHtml(s.name)}</option>`).join('')}</select>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:14px;">
+      <button type="button" class="btn btn-primary" style="flex:1;" onclick="saveEditedStudent('${st.id}')">Save Changes</button>
+      <button type="button" class="btn btn-danger" onclick="confirmAndDeleteStudent('${st.id}')">Delete</button>
+    </div>
+  `;
+  document.getElementById('drawerBackdrop').classList.add('open');
+  document.getElementById('drawerPanel').classList.add('open');
+}
+
+function saveEditedStudent(studentId) {
+  const st = (ws.students || []).find(x => x.id === studentId);
+  if (!st) return;
+  const roll = document.getElementById('dEditStuRoll').value.trim();
+  const name = document.getElementById('dEditStuName').value.trim();
+  const semId = document.getElementById('dEditStuSem').value;
+  if (!name) { showToast('Enter student name'); return; }
+  st.roll = roll || st.roll;
+  st.name = name;
+  st.semId = semId;
+  activeAttSemId = semId;
+  queueSave();
+  closeDrawer();
+  renderStudentAttendance();
+  showToast('Student record updated');
+}
+
+function confirmAndDeleteStudent(studentId) {
+  const st = (ws.students || []).find(x => x.id === studentId);
+  const label = st ? `${st.roll} - ${st.name}` : 'this student';
+  if (!confirm(`Are you sure you want to permanently remove ${label}?`)) return;
+  ws.students = ws.students.filter(x => x.id !== studentId);
+  queueSave();
+  closeDrawer();
+  renderStudentAttendance();
+  showToast('Student removed');
+}
+
+function renderInternalMarksSheet() {
+  const tbody = document.getElementById('internalMarksTableBody');
+  if (!tbody || !ws) return;
+  ws.internalMarks = ws.internalMarks || {};
+  const subjId = (document.getElementById('attSubjectSelect') && document.getElementById('attSubjectSelect').value) || 'ALL_SUBJ';
+  const sheetKey = `${activeAttSemId}__${subjId}`;
+  ws.internalMarks[sheetKey] = ws.internalMarks[sheetKey] || {};
+  const marksMap = ws.internalMarks[sheetKey];
+
+  let semStudents = (ws.students || []).filter(st => st.semId === activeAttSemId);
+  if (subjId !== 'ALL_SUBJ') {
+    const enrolledSpecific = semStudents.filter(st => Array.isArray(st.subjectIds) && st.subjectIds.length > 0);
+    if (enrolledSpecific.length > 0) {
+      semStudents = semStudents.filter(st => Array.isArray(st.subjectIds) && st.subjectIds.includes(subjId));
+    }
+  }
+  semStudents.sort((a, b) => (parseInt(a.roll, 10) || 9999) - (parseInt(b.roll, 10) || 9999));
+
+  if (semStudents.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--muted); padding:16px;">No students in this semester/subject filter.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = semStudents.map(st => {
+    const m = marksMap[st.id] || { test: '', assign: '', tut: '', att: '' };
+    const total = (parseFloat(m.test) || 0) + (parseFloat(m.assign) || 0) + (parseFloat(m.tut) || 0) + (parseFloat(m.att) || 0);
+    return `
+      <tr>
+        <td><strong>${escapeHtml(st.roll)}</strong></td>
+        <td style="font-weight:600;">${escapeHtml(st.name)}</td>
+        <td><input type="number" step="0.5" min="0" class="marks-input" value="${escapeHtml(m.test)}" onchange="updateInternalMark('${sheetKey}','${st.id}','test',this.value)"></td>
+        <td><input type="number" step="0.5" min="0" class="marks-input" value="${escapeHtml(m.assign)}" onchange="updateInternalMark('${sheetKey}','${st.id}','assign',this.value)"></td>
+        <td><input type="number" step="0.5" min="0" class="marks-input" value="${escapeHtml(m.tut)}" onchange="updateInternalMark('${sheetKey}','${st.id}','tut',this.value)"></td>
+        <td><input type="number" step="0.5" min="0" class="marks-input" value="${escapeHtml(m.att)}" onchange="updateInternalMark('${sheetKey}','${st.id}','att',this.value)"></td>
+        <td><span class="badge b-accent" style="font-size:12.5px;">${total}</span></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function updateInternalMark(sheetKey, stuId, field, val) {
+  ws.internalMarks = ws.internalMarks || {};
+  ws.internalMarks[sheetKey] = ws.internalMarks[sheetKey] || {};
+  ws.internalMarks[sheetKey][stuId] = ws.internalMarks[sheetKey][stuId] || { test: '', assign: '', tut: '', att: '' };
+  ws.internalMarks[sheetKey][stuId][field] = val;
+  queueSave();
+  renderInternalMarksSheet();
+}
+
+function downloadInternalMarksCsv() {
+  const curSem = ws.studentSemesters.find(s => s.id === activeAttSemId) || { name: 'Semester' };
+  const subjId = (document.getElementById('attSubjectSelect') && document.getElementById('attSubjectSelect').value) || 'ALL_SUBJ';
+  const sheetKey = `${activeAttSemId}__${subjId}`;
+  const marksMap = (ws.internalMarks || {})[sheetKey] || {};
+
+  let semStudents = (ws.students || []).filter(st => st.semId === activeAttSemId)
+    .sort((a, b) => (parseInt(a.roll, 10) || 9999) - (parseInt(b.roll, 10) || 9999));
+
+  const lines = ['"Roll No","Student Name","Test / Quiz","Assignment","Tutorial","Attendance Bonus","Total Marks"'];
+  semStudents.forEach(st => {
+    const m = marksMap[st.id] || { test: '', assign: '', tut: '', att: '' };
+    const total = (parseFloat(m.test) || 0) + (parseFloat(m.assign) || 0) + (parseFloat(m.tut) || 0) + (parseFloat(m.att) || 0);
+    lines.push(`"${st.roll}","${st.name.replace(/"/g, '""')}","${m.test || 0}","${m.assign || 0}","${m.tut || 0}","${m.att || 0}","${total}"`);
+  });
+
+  const blob = new Blob([lines.join('
+')], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ATHENA_Internal_Marks_${curSem.name.replace(/\s+/g, '_')}.csv`;
+  a.click();
+  showToast('Internal marks CSV downloaded');
 }
 
 /* ==========================================================================
